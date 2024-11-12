@@ -14,8 +14,7 @@
     {
       devShells.${system}.default = pkgs.mkShell {
         buildInputs = with pkgs; [
-          dotnetCorePackages.sdk_9_0
-					dotnetPackages.Nuget
+					go
         ];
 
         shellHook = ''

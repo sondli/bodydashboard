@@ -26,7 +26,6 @@
         shellHook = ''
           echo "BodyDashboard dev environment loaded!"
           
-          # Check if Docker is running
           if ! docker info >/dev/null 2>&1; then
             echo "Error: Docker daemon is not running. Please start Docker first."
             exit 1
@@ -35,9 +34,9 @@
           echo "Checking PostgreSQL container..."
           
           # Check if container exists (running or stopped)
-          if docker ps -a -q -f name=${postgres.container-name} | grep . >/dev/null; then
+          if docker ps -a -q -f name=${postgres.container-name} | grep . > /dev/null; then
             # Container exists, check if it's running
-            if docker ps -q -f name=${postgres.container-name} | grep . >/dev/null; then
+            if docker ps -q -f name=${postgres.container-name} | grep . > /dev/null; then
               echo "PostgreSQL container is already running"
             else
               echo "Starting existing PostgreSQL container..."
@@ -51,7 +50,7 @@
               -e POSTGRES_PASSWORD=${postgres.password} \
               -e POSTGRES_DB=${postgres.db-name} \
               -p ${postgres.port}:5432 \
-              postgres:15
+              postgres:16
           fi
         '';
       };

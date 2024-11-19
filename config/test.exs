@@ -17,14 +17,8 @@ config :bodydashboard, Bodydashboard.Repo,
 # you can enable the server option below.
 config :bodydashboard, BodydashboardWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
-  secret_key_base: "0Waj3o+E601uOQMjYRlTSwMtX7/h+ODt8ZtKoufe1msy4rOyYT7V6w5sDa94fNq1",
+  secret_key_base: "dSIwjlOx/PQWKIIywztXAHs1yeKLka43qI3Lc38s0phKR1xnIGyHxNPX5CTKFH8K",
   server: false
-
-# In test we don't send emails
-config :bodydashboard, Bodydashboard.Mailer, adapter: Swoosh.Adapters.Test
-
-# Disable swoosh api client as it is only required for production adapters
-config :swoosh, :api_client, false
 
 # Print only warnings and errors during test
 config :logger, level: :warning

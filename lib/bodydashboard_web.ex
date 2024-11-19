@@ -43,7 +43,6 @@ defmodule BodydashboardWeb do
         layouts: [html: BodydashboardWeb.Layouts]
 
       import Plug.Conn
-      import BodydashboardWeb.Gettext
 
       unquote(verified_routes())
     end
@@ -85,7 +84,6 @@ defmodule BodydashboardWeb do
       import Phoenix.HTML
       # Core UI components and translation
       import BodydashboardWeb.CoreComponents
-      import BodydashboardWeb.Gettext
 
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS

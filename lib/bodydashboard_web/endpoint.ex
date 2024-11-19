@@ -7,7 +7,7 @@ defmodule BodydashboardWeb.Endpoint do
   @session_options [
     store: :cookie,
     key: "_bodydashboard_key",
-    signing_salt: "Y/Esk5+w",
+    signing_salt: "k3UJSnWW",
     same_site: "Lax"
   ]
 

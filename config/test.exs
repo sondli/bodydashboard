@@ -1,5 +1,8 @@
 import Config
 
+# Only in tests, remove the complexity from the password hashing algorithm
+config :bcrypt_elixir, :log_rounds, 1
+
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used
@@ -17,8 +20,14 @@ config :bodydashboard, Bodydashboard.Repo,
 # you can enable the server option below.
 config :bodydashboard, BodydashboardWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
-  secret_key_base: "dSIwjlOx/PQWKIIywztXAHs1yeKLka43qI3Lc38s0phKR1xnIGyHxNPX5CTKFH8K",
+  secret_key_base: "vP+gDdUvjm95LbsEvCMc9B156ncFOxkqpAozdC5zBRQ2oQbdxZvXlKUfEgf4JgK6",
   server: false
+
+# In test we don't send emails
+config :bodydashboard, Bodydashboard.Mailer, adapter: Swoosh.Adapters.Test
+
+# Disable swoosh api client as it is only required for production adapters
+config :swoosh, :api_client, false
 
 # Print only warnings and errors during test
 config :logger, level: :warning

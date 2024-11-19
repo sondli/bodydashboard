@@ -20,7 +20,16 @@ config :bodydashboard, BodydashboardWeb.Endpoint,
     layout: false
   ],
   pubsub_server: Bodydashboard.PubSub,
-  live_view: [signing_salt: "yOsSW47a"]
+  live_view: [signing_salt: "hA2CwrJb"]
+
+# Configures the mailer
+#
+# By default it uses the "Local" adapter which stores the emails
+# locally. You can see the emails in your browser, at "/dev/mailbox".
+#
+# For production it's recommended to configure a different adapter
+# at the `config/runtime.exs`.
+config :bodydashboard, Bodydashboard.Mailer, adapter: Swoosh.Adapters.Local
 
 # Configure esbuild (the version is required)
 config :esbuild,

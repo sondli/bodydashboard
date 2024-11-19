@@ -12,6 +12,8 @@ defmodule Bodydashboard.Application do
       Bodydashboard.Repo,
       {DNSCluster, query: Application.get_env(:bodydashboard, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Bodydashboard.PubSub},
+      # Start the Finch HTTP client for sending emails
+      {Finch, name: Bodydashboard.Finch},
       # Start a worker by calling: Bodydashboard.Worker.start_link(arg)
       # {Bodydashboard.Worker, arg},
       # Start to serve requests, typically the last entry

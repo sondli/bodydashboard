@@ -68,6 +68,10 @@ defmodule BodydashboardWeb.Router do
       on_mount: [{BodydashboardWeb.UserAuth, :ensure_authenticated}] do
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
+    end
+
+    live_session :dashboard,
+      on_mount: [{BodydashboardWeb.UserAuth, :ensure_authenticated}] do
       live "/dashboard", DashboardLive, :index
       live "/dashboard/body_composition", DashboardBodyCompositionLive, :index
     end

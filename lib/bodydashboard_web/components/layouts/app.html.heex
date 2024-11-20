@@ -6,9 +6,11 @@
   </div>
   <div>
     <%= if @current_user do %>
-      <span class="text-[0.8125rem] leading-6 text-zinc-900">
-        <%= @current_user.email %>
-      </span>
+      <.button>
+        <.link href={~p"/dashboard"}>
+          My Dashboard
+        </.link>
+      </.button>
       <.button>
         <.link href={~p"/users/settings"}>
           Settings

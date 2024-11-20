@@ -19,7 +19,7 @@
     {
       devShells.${system}.default = pkgs.mkShell {
         buildInputs = with pkgs; [
-					elixir
+          elixir
           docker
           postgresql
         ];

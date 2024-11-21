@@ -52,10 +52,16 @@ defmodule BodydashboardWeb.Router do
 
     live_session :redirect_if_user_is_authenticated,
       on_mount: [{BodydashboardWeb.UserAuth, :redirect_if_user_is_authenticated}] do
-      live "/users/register", UserRegistrationLive, :new
-      live "/users/log_in", UserLoginLive, :new
-      live "/users/reset_password", UserForgotPasswordLive, :new
-      live "/users/reset_password/:token", UserResetPasswordLive, :edit
+      live "/users/register", UserRegistrationLive, :new,
+        container: {:div, style: "display: contents"}
+
+      live "/users/log_in", UserLoginLive, :new, container: {:div, style: "display: contents"}
+
+      live "/users/reset_password", UserForgotPasswordLive, :new,
+        container: {:div, style: "display: contents"}
+
+      live "/users/reset_password/:token", UserResetPasswordLive, :edit,
+        container: {:div, style: "display: contents"}
     end
 
     post "/users/log_in", UserSessionController, :create
@@ -66,14 +72,11 @@ defmodule BodydashboardWeb.Router do
 
     live_session :require_authenticated_user,
       on_mount: [{BodydashboardWeb.UserAuth, :ensure_authenticated}] do
-      live "/users/settings", UserSettingsLive, :edit
-      live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
-    end
+      live "/users/settings", UserSettingsLive, :edit,
+        container: {:div, style: "display: contents"}
 
-    live_session :dashboard,
-      on_mount: [{BodydashboardWeb.UserAuth, :ensure_authenticated}] do
-      live "/dashboard", DashboardLive, :index
-      live "/dashboard/body_composition", DashboardBodyCompositionLive, :index
+      live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email,
+        container: {:div, style: "display: contents"}
     end
   end
 
@@ -84,8 +87,23 @@ defmodule BodydashboardWeb.Router do
 
     live_session :current_user,
       on_mount: [{BodydashboardWeb.UserAuth, :mount_current_user}] do
-      live "/users/confirm/:token", UserConfirmationLive, :edit
-      live "/users/confirm", UserConfirmationInstructionsLive, :new
+      live "/users/confirm/:token", UserConfirmationLive, :edit,
+        container: {:div, style: "display: contents"}
+
+      live "/users/confirm", UserConfirmationInstructionsLive, :new,
+        container: {:div, style: "display: contents"}
+    end
+  end
+
+  scope "/dashboard", BodydashboardWeb do
+    pipe_through [:browser, :require_authenticated_user]
+
+    live_session :dashboard,
+      on_mount: [{BodydashboardWeb.UserAuth, :ensure_authenticated}] do
+      live "/", DashboardLive, :index, container: {:div, style: "display: contents"}
+
+      live "/body_composition", DashboardLive, :body_composition,
+        container: {:div, style: "display: contents"}
     end
   end
 end

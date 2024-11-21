@@ -16,4 +16,10 @@ defmodule Bodydashboard.Records do
     |> where(user_id: ^user.id)
     |> Repo.all()
   end
+
+  def get_user_records(user, date) when is_struct(date, Date) do
+    BodyRecord
+    |> where([b], b.user_id == ^user.id and fragment("DATE(?)", b.record_date) == ^date)
+    |> Repo.all()
+  end
 end

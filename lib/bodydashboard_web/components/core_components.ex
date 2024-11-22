@@ -49,7 +49,11 @@ defmodule BodydashboardWeb.CoreComponents do
       data-cancel={JS.exec(@on_cancel, "phx-remove")}
       class="relative z-50 hidden"
     >
-      <div id={"#{@id}-bg"} class="bg-primary-50/90 fixed inset-0 transition-opacity" aria-hidden="true" />
+      <div
+        id={"#{@id}-bg"}
+        class="bg-primary-50/90 fixed inset-0 transition-opacity"
+        aria-hidden="true"
+      />
       <div
         class="fixed inset-0 overflow-y-auto"
         aria-labelledby={"#{@id}-title"}
@@ -156,8 +160,7 @@ defmodule BodydashboardWeb.CoreComponents do
         phx-connected={hide("#client-error")}
         hidden
       >
-        Attempting to reconnect
-        <.icon name="hero-arrow-path" class="ml-1 h-3 w-3 animate-spin" />
+        Attempting to reconnect <.icon name="hero-arrow-path" class="ml-1 h-3 w-3 animate-spin" />
       </.flash>
 
       <.flash
@@ -593,6 +596,45 @@ defmodule BodydashboardWeb.CoreComponents do
   def icon(%{name: "hero-" <> _} = assigns) do
     ~H"""
     <span class={[@name, @class]} />
+    """
+  end
+
+  @doc """
+  Renders a clickable [Heroicon](https://heroicons.com).
+
+  Heroicons come in three styles – outline, solid, and mini.
+  By default, the outline style is used, but solid and mini may
+  be applied by using the `-solid` and `-mini` suffix.
+
+  You can customize the size and colors of the icons by setting
+  width, height, and background color classes.
+
+  Icons are extracted from the `deps/heroicons` directory and bundled within
+  your compiled app.css by the plugin in your `assets/tailwind.config.js`.
+
+  attr :name, :string, required: true
+  attr :class, :string, default: nil
+  attr :onclick, :string, default: nil
+  """
+
+  def clickable_icon(%{name: "hero-" <> _} = assigns) do
+    assigns =
+      assigns
+      |> assign_new(:class, fn -> nil end)
+      |> assign(
+        :phx_click,
+        if(assigns.onclick, do: String.replace(assigns.onclick, "onclick=", ""))
+      )
+
+    ~H"""
+    <span
+      class={[
+        @name,
+        "cursor-pointer hover:scale-110 active:scale-90 transition-transform duration-150",
+        @class
+      ]}
+      phx-click={@phx_click}
+    />
     """
   end
 

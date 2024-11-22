@@ -1,6 +1,7 @@
 defmodule Bodydashboard.Records do
   import Ecto.Query
   alias Ecto.Repo
+  alias Ecto.Repo
   alias Bodydashboard.Repo
   alias Bodydashboard.Records.BodyRecord
 
@@ -9,6 +10,23 @@ defmodule Bodydashboard.Records do
     |> Ecto.build_assoc(:body_records)
     |> BodyRecord.changeset(attrs)
     |> Repo.insert()
+  end
+
+  def update_body_record(id, attrs) do
+    case get_body_record(id) do
+      nil ->
+        {:error, :not_found}
+
+      existing ->
+        existing
+        |> BodyRecord.changeset(attrs)
+        |> Repo.update()
+    end
+  end
+
+  def get_body_record(id) do
+    BodyRecord
+    |> Repo.get(id)
   end
 
   def get_user_records(user) do

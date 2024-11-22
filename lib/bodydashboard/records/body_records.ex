@@ -15,6 +15,7 @@ defmodule Bodydashboard.Records.BodyRecord do
     body_record
     |> cast(attrs, [:weight_kg, :user_id, :record_date])
     |> validate_required([:weight_kg, :user_id, :record_date])
+    |> validate_number(:weight_kg, greater_than: 0)
     |> foreign_key_constraint(:user_id)
   end
 end

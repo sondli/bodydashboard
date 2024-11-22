@@ -14,10 +14,10 @@ defmodule Bodydashboard.Records.BodyComposition do
     timestamps(type: :utc_datetime)
   end
 
-  def changeset(body_record, attrs) do
-    body_record
+  def changeset(body_composition, attrs) do
+    body_composition
     |> cast(attrs, [:weight_kg, :user_id, :record_date, :body_fat, :muscle_mass, :bone_density])
-    |> validate_required([:weight_kg, :user_id, :record_date, :body_fat, :muscle_mass, :bone_density])
+    |> validate_required([:user_id, :record_date])
     |> validate_number(:weight_kg, greater_than: 0)
     |> validate_number(:body_fat, greater_than: 0)
     |> validate_number(:muscle_mass, greater_than: 0)

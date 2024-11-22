@@ -5,15 +5,15 @@ defmodule Bodydashboard.Records do
   alias Bodydashboard.Repo
   alias Bodydashboard.Records.BodyComposition
 
-  def create_body_record(user, attrs) do
+  def create_body_composition(user, attrs) do
     user
-    |> Ecto.build_assoc(:body_records)
+    |> Ecto.build_assoc(:body_compositions)
     |> BodyComposition.changeset(attrs)
     |> Repo.insert()
   end
 
-  def update_body_record(id, attrs) do
-    case get_body_record(id) do
+  def update_body_composition(id, attrs) do
+    case get_body_composition(id) do
       nil ->
         {:error, :not_found}
 
@@ -24,20 +24,20 @@ defmodule Bodydashboard.Records do
     end
   end
 
-  def get_body_record(id) do
+  def get_body_composition(id) do
     BodyComposition
     |> Repo.get(id)
   end
 
-  def get_user_records(user) do
+  def get_user_body_composition(user) do
     BodyComposition
     |> where(user_id: ^user.id)
     |> Repo.all()
   end
 
-  def get_user_records(user, date) when is_struct(date, Date) do
+  def get_user_body_composition(user, date) when is_struct(date, Date) do
     BodyComposition
     |> where([b], b.user_id == ^user.id and fragment("DATE(?)", b.record_date) == ^date)
-    |> Repo.all()
+    |> Repo.one()
   end
 end

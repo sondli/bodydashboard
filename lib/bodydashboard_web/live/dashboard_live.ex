@@ -4,9 +4,16 @@ defmodule BodydashboardWeb.DashboardLive do
   alias Bodydashboard.Records
   alias Bodydashboard.Records.BodyComposition
 
-  defp load_body_records(%{assigns: %{current_user: user, selected_date: date}} = socket) do
-    records = Records.get_user_records(user, date)
-    assign(socket, :body_records, records)
+  defp load_body_composition(%{assigns: %{current_user: user, selected_date: date}} = socket) do
+    records = Records.get_user_body_composition(user, date)
+    assign(socket, :body_composition, records)
+  end
+
+  def get_error_messages(changeset) when is_struct(changeset, Ecto.Changeset) do
+    changeset
+    |> Ecto.Changeset.traverse_errors(fn {msg, _opts} -> msg end)
+    |> Enum.map(fn {field, errors} -> "#{field} #{errors}" end)
+    |> Enum.join(", ")
   end
 
   @impl true
@@ -15,7 +22,7 @@ defmodule BodydashboardWeb.DashboardLive do
       socket
       |> assign_new(:selected_date, fn -> Date.utc_today() end)
       |> assign(changeset: BodyComposition.changeset(%BodyComposition{}, %{}))
-      |> load_body_records()
+      |> load_body_composition()
 
     {:ok, socket}
   end
@@ -26,26 +33,50 @@ defmodule BodydashboardWeb.DashboardLive do
   end
 
   @impl true
-  def handle_event("save", %{"body_record" => body_record_params}, socket) do
-    params_with_date = Map.put(body_record_params, "record_date", socket.assigns.selected_date)
+  def handle_event("save", %{"body_composition" => body_composition_params}, socket) do
+    params_with_date =
+      Map.put(body_composition_params, "record_date", socket.assigns.selected_date)
 
-    case Records.create_body_record(socket.assigns.current_user, params_with_date) do
-      {:ok, record} ->
-        {:noreply,
-         socket
-         |> update(:body_records, fn records -> [record | records] end)
-         |> put_flash(:info, "Weight saved successfully")}
+    body_composition = socket.assigns.body_composition
+    selected_date = socket.assigns.selected_date
 
-      {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign(socket, changeset: changeset)}
+    if body_composition && body_composition.record_date == selected_date do
+      case Records.update_body_composition(body_composition.id, params_with_date) do
+        {:ok, bc} ->
+          {:noreply,
+           socket
+           |> assign(:body_composition, bc)
+           |> put_flash(:info, "Body composition saved successfully")}
+
+        {:error, %Ecto.Changeset{} = changeset} ->
+          {:noreply,
+           socket
+           |> assign(:changeset, changeset)
+           |> put_flash(:error, "Failed to save: #{get_error_messages(changeset)}")}
+      end
+    else
+      case Records.create_body_composition(socket.assigns.current_user, params_with_date) do
+        {:ok, bc} ->
+          {:noreply,
+           socket
+           |> assign(:body_composition, bc)
+           |> put_flash(:info, "Body composition saved successfully")}
+
+        {:error, %Ecto.Changeset{} = changeset} ->
+          {:noreply,
+           socket
+           |> assign(:changeset, changeset)
+           |> put_flash(:error, "Failed to save: #{get_error_messages(changeset)}")}
+      end
     end
   end
+
 
   def handle_event("decrement_date", _params, socket) do
     socket =
       socket
       |> update(:selected_date, &Date.add(&1, -1))
-      |> load_body_records()
+      |> load_body_composition()
 
     {:noreply, socket}
   end
@@ -54,7 +85,7 @@ defmodule BodydashboardWeb.DashboardLive do
     socket =
       socket
       |> update(:selected_date, &Date.add(&1, 1))
-      |> load_body_records()
+      |> load_body_composition()
 
     {:noreply, socket}
   end
@@ -64,12 +95,6 @@ defmodule BodydashboardWeb.DashboardLive do
       "all" -> {:noreply, push_patch(socket, to: ~p"/dashboard")}
       "body_composition" -> {:noreply, push_patch(socket, to: ~p"/dashboard/body_composition")}
     end
-  end
-
-  def record_exists_for_date?(records, date) do
-    Enum.any?(records, fn record ->
-      Date.compare(record.record_date, date) == :eq
-    end)
   end
 
   @impl true
@@ -103,11 +128,11 @@ defmodule BodydashboardWeb.DashboardLive do
           <% end %>
           <%= if @live_action == :body_composition do %>
             <div>
-              <h1>My Body Records</h1>
+              <h1>My Body Composition</h1>
               <.form :let={f} for={@changeset} phx-submit="save">
                 <.input field={f[:weight_kg]} type="text" label="Weight" />
                 <.button type="submit">
-                  <%= if record_exists_for_date?(@body_records, @selected_date) do %>
+                  <%= if @body_composition && @body_composition.record_date == @selected_date do %>
                     Update record
                   <% else %>
                     Add record
@@ -115,11 +140,11 @@ defmodule BodydashboardWeb.DashboardLive do
                 </.button>
               </.form>
               <div>
-                <%= for record <- @body_records do %>
-                  <div>
-                    Weight: <%= record.weight_kg %>
-                  </div>
-                <% end %>
+                <div>
+                  <%= if @body_composition do %>
+                    Weight: <%= @body_composition.weight_kg %>
+                  <% end %>
+                </div>
               </div>
             </div>
           <% end %>

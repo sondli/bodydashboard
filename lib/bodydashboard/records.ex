@@ -3,12 +3,12 @@ defmodule Bodydashboard.Records do
   alias Ecto.Repo
   alias Ecto.Repo
   alias Bodydashboard.Repo
-  alias Bodydashboard.Records.BodyRecord
+  alias Bodydashboard.Records.BodyComposition
 
   def create_body_record(user, attrs) do
     user
     |> Ecto.build_assoc(:body_records)
-    |> BodyRecord.changeset(attrs)
+    |> BodyComposition.changeset(attrs)
     |> Repo.insert()
   end
 
@@ -19,24 +19,24 @@ defmodule Bodydashboard.Records do
 
       existing ->
         existing
-        |> BodyRecord.changeset(attrs)
+        |> BodyComposition.changeset(attrs)
         |> Repo.update()
     end
   end
 
   def get_body_record(id) do
-    BodyRecord
+    BodyComposition
     |> Repo.get(id)
   end
 
   def get_user_records(user) do
-    BodyRecord
+    BodyComposition
     |> where(user_id: ^user.id)
     |> Repo.all()
   end
 
   def get_user_records(user, date) when is_struct(date, Date) do
-    BodyRecord
+    BodyComposition
     |> where([b], b.user_id == ^user.id and fragment("DATE(?)", b.record_date) == ^date)
     |> Repo.all()
   end

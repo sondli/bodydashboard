@@ -2,7 +2,7 @@ defmodule BodydashboardWeb.DashboardLive do
   use BodydashboardWeb, :live_view
 
   alias Bodydashboard.Records
-  alias Bodydashboard.Records.BodyRecord
+  alias Bodydashboard.Records.BodyComposition
 
   defp load_body_records(%{assigns: %{current_user: user, selected_date: date}} = socket) do
     records = Records.get_user_records(user, date)
@@ -14,7 +14,7 @@ defmodule BodydashboardWeb.DashboardLive do
     socket =
       socket
       |> assign_new(:selected_date, fn -> Date.utc_today() end)
-      |> assign(changeset: BodyRecord.changeset(%BodyRecord{}, %{}))
+      |> assign(changeset: BodyComposition.changeset(%BodyComposition{}, %{}))
       |> load_body_records()
 
     {:ok, socket}

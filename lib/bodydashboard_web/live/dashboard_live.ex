@@ -4,6 +4,13 @@ defmodule BodydashboardWeb.DashboardLive do
   alias Bodydashboard.Records
   alias Bodydashboard.Records.BodyComposition
 
+  @measurements [
+    %{field: :weight_kg, title: "Weight"},
+    %{field: :bone_density, title: "Bone Density"},
+    %{field: :muscle_mass, title: "Muscle Mass"},
+    %{field: :body_fat, title: "Body Fat"}
+  ]
+
   defp load_body_composition(%{assigns: %{current_user: user, selected_date: date}} = socket) do
     records = Records.get_user_body_composition(user, date)
     assign(socket, :body_composition, records)
@@ -22,6 +29,7 @@ defmodule BodydashboardWeb.DashboardLive do
       socket
       |> assign_new(:selected_date, fn -> Date.utc_today() end)
       |> assign(changeset: BodyComposition.changeset(%BodyComposition{}, %{}))
+      |> assign(:measurements, @measurements)
       |> load_body_composition()
 
     {:ok, socket}
@@ -70,7 +78,6 @@ defmodule BodydashboardWeb.DashboardLive do
       end
     end
   end
-
 
   def handle_event("decrement_date", _params, socket) do
     socket =
@@ -122,31 +129,45 @@ defmodule BodydashboardWeb.DashboardLive do
           </.button>
         </aside>
         <div class="h-full w-px bg-primary-100"></div>
-        <section class="w-full">
+        <section class="w-full flex flex-col gap-6">
           <%= if @live_action == :index do %>
             Index
           <% end %>
           <%= if @live_action == :body_composition do %>
-            <div>
-              <h1>My Body Composition</h1>
-              <.form :let={f} for={@changeset} phx-submit="save">
-                <.input field={f[:weight_kg]} type="text" label="Weight" />
-                <.button type="submit">
-                  <%= if @body_composition && @body_composition.record_date == @selected_date do %>
-                    Update record
-                  <% else %>
-                    Add record
-                  <% end %>
-                </.button>
-              </.form>
-              <div>
-                <div>
-                  <%= if @body_composition do %>
-                    Weight: <%= @body_composition.weight_kg %>
-                  <% end %>
-                </div>
+            <h2>My Body Composition</h2>
+            <.form :let={f} for={@changeset} phx-submit="save">
+              <div class="flex flex-col gap-6">
+                <%= for measurements <- Enum.chunk_every(@measurements, 2) do %>
+                  <div class="flex gap-6">
+                    <%= for %{field: field, title: title} <- measurements do %>
+                      <.card title={title} class="max-w-96">
+                        <div class="font-extrabold text-accent-500 h-16 flex justify-center items-center text-3xl">
+                          <%= if @body_composition && Map.get(@body_composition, field) do %>
+                            <%= Map.get(@body_composition, field) %>
+                          <% else %>
+                            0.0
+                          <% end %>
+                        </div>
+                        <:footer>
+                          <.input
+                            field={f[field]}
+                            value={(@body_composition && Map.get(@body_composition, field)) || 0.0}
+                            type="text"
+                          />
+                        </:footer>
+                      </.card>
+                    <% end %>
+                  </div>
+                <% end %>
               </div>
-            </div>
+              <.button type="submit">
+                <%= if @body_composition && @body_composition.record_date == @selected_date do %>
+                  Update record
+                <% else %>
+                  Add record
+                <% end %>
+              </.button>
+            </.form>
           <% end %>
         </section>
       </div>

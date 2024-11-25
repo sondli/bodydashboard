@@ -53,6 +53,7 @@ defmodule BodydashboardWeb do
       use Phoenix.LiveView,
         layout: {BodydashboardWeb.Layouts, :app}
 
+      import BodydashboardWeb.CustomComponents
       unquote(html_helpers())
     end
   end
@@ -60,7 +61,7 @@ defmodule BodydashboardWeb do
   def live_component do
     quote do
       use Phoenix.LiveComponent
-
+      import BodydashboardWeb.CustomComponents
       unquote(html_helpers())
     end
   end

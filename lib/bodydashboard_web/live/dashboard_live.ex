@@ -1,6 +1,8 @@
 defmodule BodydashboardWeb.DashboardLive do
   use BodydashboardWeb, :live_view
 
+  import BodydashboardWeb.Charts
+
   alias Bodydashboard.Records
   alias Bodydashboard.Records.BodyComposition
 
@@ -145,7 +147,7 @@ defmodule BodydashboardWeb.DashboardLive do
                         <:footer>
                           <.input
                             field={f[field]}
-                            value={(@body_composition && Map.get(@body_composition, field)) || 0.0}
+                            value={@body_composition && Map.get(@body_composition, field)}
                             type="text"
                           />
                         </:footer>
@@ -155,14 +157,11 @@ defmodule BodydashboardWeb.DashboardLive do
                 <% end %>
               </div>
               <.button type="submit">
-                <%= if @body_composition && @body_composition.record_date == @selected_date do %>
-                  Update record
-                <% else %>
-                  Add record
-                <% end %>
+                Save
               </.button>
             </.form>
           <% end %>
+          <.line_chart id="chart" />
         </section>
       </div>
     </div>

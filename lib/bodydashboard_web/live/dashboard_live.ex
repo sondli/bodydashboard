@@ -121,18 +121,12 @@ defmodule BodydashboardWeb.DashboardLive do
       </div>
       <div class="flex h-full gap-6">
         <aside class="flex flex-col gap-2">
-          <.button phx-click="patch-all">
-            All
-          </.button>
           <.button phx-click="patch-body_composition">
             Body composition
           </.button>
         </aside>
         <div class="h-full w-px bg-primary-100"></div>
         <section class="w-full flex flex-col gap-6">
-          <%= if @live_action == :index do %>
-            Index
-          <% end %>
           <%= if @live_action == :body_composition do %>
             <h2>My Body Composition</h2>
             <.form :let={f} for={@changeset} phx-submit="save">

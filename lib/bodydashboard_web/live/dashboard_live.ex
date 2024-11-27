@@ -174,6 +174,7 @@ defmodule BodydashboardWeb.DashboardLive do
                   width={640}
                   dataset={@chart_data.dataset}
                   categories={@chart_data.categories}
+                  animated={true}
                 />
               <% end %>
               <.form :let={f} for={@changeset} phx-submit="save">

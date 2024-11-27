@@ -13,6 +13,12 @@ Hooks.Chart = {
 			series: seriesData,
 			xaxis: {
 				categories: categoriesData
+			},
+			stroke: {
+				curve: "smooth"
+			},
+			markers: {
+				size: 6
 			}
 		}
 

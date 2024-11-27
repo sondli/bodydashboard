@@ -32,6 +32,7 @@ defmodule Bodydashboard.Records do
   def get_user_body_composition(user) do
     BodyComposition
     |> where(user_id: ^user.id)
+    |> order_by([asc: :record_date])
     |> Repo.all()
   end
 

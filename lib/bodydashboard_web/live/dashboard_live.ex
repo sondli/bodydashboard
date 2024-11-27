@@ -25,6 +25,38 @@ defmodule BodydashboardWeb.DashboardLive do
     |> Enum.join(", ")
   end
 
+  defp update_chart(%{assigns: %{current_user: user}} = socket) do
+    all_compositions = Records.get_user_body_composition(user)
+
+    with_dates = Enum.map(all_compositions, &{&1.weight_kg, &1.record_date})
+
+    {result, _last} =
+      Enum.map_reduce(with_dates, nil, fn
+        {nil, date}, last -> {{last, date}, last}
+        {weight, date}, _last -> {{weight, date}, weight}
+      end)
+
+    dataset = [
+      %{
+        name: "Weight",
+        data: Enum.map(result, &elem(&1, 0))
+      }
+    ]
+
+    categories = Enum.map(result, &Calendar.strftime(elem(&1, 1), "%b-%d"))
+
+    chart_data = %{dataset: dataset, categories: categories}
+
+    IO.inspect(chart_data)
+
+    socket =
+      socket
+      |> assign(:chart_data, chart_data)
+      |> push_event("update-dataset", chart_data)
+
+    socket
+  end
+
   @impl true
   def mount(_params, _session, socket) do
     socket =
@@ -33,6 +65,7 @@ defmodule BodydashboardWeb.DashboardLive do
       |> assign(changeset: BodyComposition.changeset(%BodyComposition{}, %{}))
       |> assign(:measurements, @measurements)
       |> load_body_composition()
+      |> update_chart()
 
     {:ok, socket}
   end
@@ -56,7 +89,8 @@ defmodule BodydashboardWeb.DashboardLive do
           {:noreply,
            socket
            |> assign(:body_composition, bc)
-           |> put_flash(:info, "Body composition saved successfully")}
+           |> put_flash(:info, "Body composition saved successfully")
+           |> update_chart()}
 
         {:error, %Ecto.Changeset{} = changeset} ->
           {:noreply,
@@ -70,7 +104,8 @@ defmodule BodydashboardWeb.DashboardLive do
           {:noreply,
            socket
            |> assign(:body_composition, bc)
-           |> put_flash(:info, "Body composition saved successfully")}
+           |> put_flash(:info, "Body composition saved successfully")
+           |> update_chart()}
 
         {:error, %Ecto.Changeset{} = changeset} ->
           {:noreply,
@@ -131,37 +166,47 @@ defmodule BodydashboardWeb.DashboardLive do
         <section class="w-full flex flex-col gap-6">
           <%= if @live_action == :body_composition do %>
             <h2>My Body Composition</h2>
-            <.form :let={f} for={@changeset} phx-submit="save">
-              <div class="flex flex-col gap-6">
-                <%= for measurements <- Enum.chunk_every(@measurements, 2) do %>
-                  <div class="flex gap-6">
-                    <%= for %{field: field, title: title} <- measurements do %>
-                      <.card title={title} class="max-w-96">
-                        <div class="font-extrabold text-accent-500 h-16 flex justify-center items-center text-3xl">
-                          <%= if @body_composition && Map.get(@body_composition, field) do %>
-                            <%= Map.get(@body_composition, field) %>
-                          <% else %>
-                            0.0
-                          <% end %>
-                        </div>
-                        <:footer>
-                          <.input
-                            field={f[field]}
-                            value={@body_composition && Map.get(@body_composition, field)}
-                            type="text"
-                          />
-                        </:footer>
-                      </.card>
-                    <% end %>
-                  </div>
-                <% end %>
-              </div>
-              <.button type="submit">
-                Save
-              </.button>
-            </.form>
+            <div class="flex flex-row gap-6">
+              <%= if @chart_data do %>
+                <.line_graph
+                  id="line-chart-1"
+                  height={420}
+                  width={640}
+                  dataset={@chart_data.dataset}
+                  categories={@chart_data.categories}
+                />
+              <% end %>
+              <.form :let={f} for={@changeset} phx-submit="save">
+                <div class="flex flex-col gap-6">
+                  <%= for measurements <- Enum.chunk_every(@measurements, 2) do %>
+                    <div class="flex gap-6">
+                      <%= for %{field: field, title: title} <- measurements do %>
+                        <.card title={title} class="max-w-96">
+                          <div class="font-extrabold text-accent-500 h-16 flex justify-center items-center text-3xl">
+                            <%= if @body_composition && Map.get(@body_composition, field) do %>
+                              <%= Map.get(@body_composition, field) %>
+                            <% else %>
+                              0.0
+                            <% end %>
+                          </div>
+                          <:footer>
+                            <.input
+                              field={f[field]}
+                              value={@body_composition && Map.get(@body_composition, field)}
+                              type="text"
+                            />
+                          </:footer>
+                        </.card>
+                      <% end %>
+                    </div>
+                  <% end %>
+                </div>
+                <.button type="submit">
+                  Save
+                </.button>
+              </.form>
+            </div>
           <% end %>
-          <.line_chart id="chart" />
         </section>
       </div>
     </div>

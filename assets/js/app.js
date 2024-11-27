@@ -21,9 +21,11 @@ import "phoenix_html"
 import { Socket } from "phoenix"
 import { LiveSocket } from "phoenix_live_view"
 import topbar from "../vendor/topbar"
+import Hooks from "./hooks"
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 let liveSocket = new LiveSocket("/live", Socket, {
+	hooks: Hooks,
 	longPollFallbackMs: 2500,
 	params: { _csrf_token: csrfToken }
 })
@@ -41,23 +43,3 @@ liveSocket.connect()
 // >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
-
-
-
-// assets/js/app.js
-var options = {
-	chart: {
-		type: 'line'
-	},
-	series: [{
-		name: 'sales',
-		data: [30, 40, 35, 50, 49, 60, 70, 91, 125]
-	}],
-	xaxis: {
-		categories: [1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999]
-	}
-}
-
-var chart = new ApexCharts(document.querySelector("#chart"), options)
-
-chart.render()

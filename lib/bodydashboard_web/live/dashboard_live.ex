@@ -47,8 +47,7 @@ defmodule BodydashboardWeb.DashboardLive do
 
     chart_data = %{dataset: dataset, categories: categories}
 
-    IO.inspect(chart_data)
-
+    testdata = map_body_composition_data(all_compositions)
     socket =
       socket
       |> assign(:chart_data, chart_data)

@@ -26,34 +26,16 @@ defmodule BodydashboardWeb.DashboardLive do
   end
 
   defp update_chart(%{assigns: %{current_user: user}} = socket) do
-    all_compositions = Records.get_user_body_composition(user)
-
-    with_dates = Enum.map(all_compositions, &{&1.weight_kg, &1.record_date})
-
-    {result, _last} =
-      Enum.map_reduce(with_dates, nil, fn
-        {nil, date}, last -> {{last, date}, last}
-        {weight, date}, _last -> {{weight, date}, weight}
-      end)
-
-    dataset = [
-      %{
-        name: "Weight",
-        data: Enum.map(result, &elem(&1, 0))
-      }
-    ]
-
-    categories = Enum.map(result, &Calendar.strftime(elem(&1, 1), "%b-%d"))
+    {dataset, categories} =
+      user
+      |> Records.get_user_body_composition()
+      |> map_bc_data()
 
     chart_data = %{dataset: dataset, categories: categories}
 
-    testdata = map_body_composition_data(all_compositions)
-    socket =
-      socket
-      |> assign(:chart_data, chart_data)
-      |> push_event("update-dataset", chart_data)
-
     socket
+    |> assign(:chart_data, chart_data)
+    |> push_event("update-dataset", chart_data)
   end
 
   @impl true

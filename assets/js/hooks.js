@@ -19,7 +19,7 @@ Hooks.Chart = {
 			},
 			markers: {
 				size: 6
-			}
+			},
 		}
 
 		const chart = new ApexCharts(this.el, options);

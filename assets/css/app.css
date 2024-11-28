@@ -3,3 +3,19 @@
 @import "tailwindcss/utilities";
 
 /* This file is for your main application CSS */
+.apexcharts-tooltip {
+	background: #18181b !important;
+	border-color: #18181b !important;
+	box-shadow: none !important;
+	border-radius: 0.5rem !important;
+}
+.apexcharts-tooltip-title {
+	background: #18181b !important;
+	border-color: #18181b !important;
+}
+.apexcharts-xaxistooltip {
+	background: #18181b !important;
+	border-color: #18181b !important;
+	color: white !important;
+	border-radius: 0.5rem !important;
+}

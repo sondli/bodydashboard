@@ -1,41 +1,25 @@
-<header class="p-4 sm:p-6 lg:p-8 flex items-center justify-between">
+<header class="p-4 sm:p-6 lg:p-8 flex items-center justify-between mx-auto w-full max-w-sm">
   <div>
     <.link href={~p"/"} class="font-bold text-xl">
-      BodyDashboard
+      BD
     </.link>
   </div>
-  <div>
+  <nav>
     <%= if @current_user do %>
-      <.button>
-        <.link href={~p"/dashboard"}>
-          My Dashboard
-        </.link>
-      </.button>
-      <.button>
-        <.link href={~p"/users/settings"}>
-          Settings
-        </.link>
-      </.button>
-      <.button>
-        <.link href={~p"/users/log_out"} method="delete">
-          Log out
-        </.link>
-      </.button>
+      <.link href={~p"/users/settings"}>
+        Settings
+      </.link>
     <% else %>
-      <.button>
-        <.link href={~p"/users/register"}>
-          Register
-        </.link>
-      </.button>
-      <.button>
-        <.link href={~p"/users/log_in"}>
-          Log in
-        </.link>
-      </.button>
+      <.link href={~p"/users/register"}>
+        Register
+      </.link>
+      <.link href={~p"/users/log_in"}>
+        Log in
+      </.link>
     <% end %>
-  </div>
+  </nav>
 </header>
-<main class="flex-1 p-4 sm:p-6 lg:p-8">
+<main class="flex-1 p-4 sm:p-6 lg:p-8 mx-auto w-full max-w-sm">
   <.flash_group flash={@flash} />
   <%= @inner_content %>
 </main>

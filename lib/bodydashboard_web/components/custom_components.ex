@@ -8,7 +8,7 @@ defmodule BodydashboardWeb.CustomComponents do
 
   def card(assigns) do
     ~H"""
-    <div class={["flex flex-col bg-primary-50 rounded-lg shadow p-4", @class]}>
+    <div class={["flex flex-col bg-zinc-900 rounded-lg shadow p-4", @class]}>
       <h3>
         <%= @title %>
       </h3>

@@ -11,6 +11,9 @@ defmodule BodydashboardWeb.UserSettingsLive do
     </.header>
 
     <div class="space-y-12 divide-y">
+      <.link href={~p"/users/log_out"} method="delete">
+        Log out
+      </.link>
       <div>
         <.simple_form
           for={@email_form}

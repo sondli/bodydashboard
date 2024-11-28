@@ -615,12 +615,14 @@ defmodule BodydashboardWeb.CoreComponents do
   attr :name, :string, required: true
   attr :class, :string, default: nil
   attr :onclick, :string, default: nil
+  attr :disabled, :boolean, default: false
   """
 
   def clickable_icon(%{name: "hero-" <> _} = assigns) do
     assigns =
       assigns
       |> assign_new(:class, fn -> nil end)
+      |> assign_new(:disabled, fn -> false end)
       |> assign(
         :phx_click,
         if(assigns.onclick, do: String.replace(assigns.onclick, "onclick=", ""))
@@ -628,12 +630,19 @@ defmodule BodydashboardWeb.CoreComponents do
 
     ~H"""
     <span
-      class={[
-        @name,
-        "cursor-pointer hover:scale-110 active:scale-90 transition-transform duration-150",
-        @class
-      ]}
-      phx-click={@phx_click}
+      class={
+        [
+          @name,
+          if(@disabled,
+            do: "opacity-20",
+            else: "cursor-pointer hover:scale-110 active:scale-90"
+          ),
+          "transition-transform duration-150",
+          @class
+        ]
+      }
+      phx-click={!@disabled && @phx_click}
+      aria-disabled={@disabled}
     />
     """
   end

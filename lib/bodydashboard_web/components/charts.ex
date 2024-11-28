@@ -54,19 +54,15 @@ defmodule BodydashboardWeb.Charts do
           data: Enum.map(data, & &1.bone_density)
         }
       ],
-      Enum.map(data, & &1.record_date)
+      Enum.map(data, &Calendar.strftime(&1.record_date, "%b-%d"))
     }
   end
 
   def map_bc_data(data) when is_list(data) do
-    {series, categories} =
-      data
-      |> interpolate_missing_bc_data()
-      |> Enum.sort_by(& &1.record_date, :asc)
-      |> split_fields()
-
-    IO.inspect(series, label: "test")
-    {series, categories}
+    data
+    |> interpolate_missing_bc_data()
+    |> Enum.sort_by(& &1.record_date, :asc)
+    |> split_fields()
   end
 
   def map_bc_data(data) when is_struct(data, BodyComposition) do

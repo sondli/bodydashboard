@@ -38,6 +38,14 @@ defmodule BodydashboardWeb.DashboardLive do
     |> push_event("update-dataset", chart_data)
   end
 
+  defp get_data_postfix(field) do
+    case field do
+      :weight_kg -> "kg"
+      :body_fat -> "%"
+      _ -> ""
+    end
+  end
+
   @impl true
   def mount(_params, _session, socket) do
     socket =
@@ -107,90 +115,94 @@ defmodule BodydashboardWeb.DashboardLive do
   end
 
   def handle_event("increment_date", _params, socket) do
-    socket =
-      socket
-      |> update(:selected_date, &Date.add(&1, 1))
-      |> load_body_composition()
+    case Date.compare(Date.add(socket.assigns.selected_date, 1), Date.utc_today()) do
+      :gt ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Can't select future date")}
 
-    {:noreply, socket}
+      _ ->
+        {:noreply,
+         socket
+         |> update(:selected_date, &Date.add(&1, 1))
+         |> load_body_composition()}
+    end
   end
 
-  def handle_event("patch-" <> category, _params, socket) do
-    case category do
-      "all" -> {:noreply, push_patch(socket, to: ~p"/dashboard")}
-      "body_composition" -> {:noreply, push_patch(socket, to: ~p"/dashboard/body_composition")}
-    end
+  def handle_event("add_data", _params, socket) do
+    date_string = Date.to_string(socket.assigns.selected_date)
+    {:noreply, push_patch(socket, to: ~p"/dashboard/add_data/#{date_string}")}
+  end
+
+  def handle_event("go_to_dashboard", _params, socket) do
+    {:noreply, push_patch(socket, to: ~p"/dashboard")}
   end
 
   @impl true
   def render(assigns) do
     ~H"""
     <div class="flex h-full flex-col gap-6">
-      <div class="flex justify-between w-40">
-        <.clickable_icon name="hero-arrow-left" onclick="decrement_date" />
-        <span>
-          <%= if @selected_date == Date.utc_today() do %>
-            Today
-          <% else %>
-            <%= Calendar.strftime(@selected_date, "%b %d") %>
-          <% end %>
-        </span>
-        <.clickable_icon name="hero-arrow-right" onclick="increment_date" />
-      </div>
-      <div class="flex h-full gap-6">
-        <aside class="flex flex-col gap-2">
-          <.button phx-click="patch-body_composition">
-            Body composition
-          </.button>
-        </aside>
-        <div class="h-full w-px bg-primary-100"></div>
+      <%= if @live_action == :index do %>
+        <div class="flex justify-between max-w-sm">
+          <.clickable_icon name="hero-arrow-left" onclick="decrement_date" />
+          <span class="text-xl">
+            <%= if @selected_date == Date.utc_today() do %>
+              Today
+            <% else %>
+              <%= Calendar.strftime(@selected_date, "%b %d") %>
+            <% end %>
+          </span>
+          <.clickable_icon
+            name="hero-arrow-right"
+            onclick="increment_date"
+            disabled={Date.add(@selected_date, 1) > Date.utc_today()}
+          />
+        </div>
         <section class="w-full flex flex-col gap-6">
-          <%= if @live_action == :body_composition do %>
-            <h2>My Body Composition</h2>
-            <div class="flex flex-row gap-6">
-              <%= if @chart_data do %>
-                <.line_graph
-                  id="line-chart-1"
-                  height={420}
-                  width={640}
-                  dataset={@chart_data.dataset}
-                  categories={@chart_data.categories}
-                  animated={true}
-                />
-              <% end %>
-              <.form :let={f} for={@changeset} phx-submit="save">
-                <div class="flex flex-col gap-6">
-                  <%= for measurements <- Enum.chunk_every(@measurements, 2) do %>
-                    <div class="flex gap-6">
-                      <%= for %{field: field, title: title} <- measurements do %>
-                        <.card title={title} class="max-w-96">
-                          <div class="font-extrabold text-accent-500 h-16 flex justify-center items-center text-3xl">
-                            <%= if @body_composition && Map.get(@body_composition, field) do %>
-                              <%= Map.get(@body_composition, field) %>
-                            <% else %>
-                              0.0
-                            <% end %>
-                          </div>
-                          <:footer>
-                            <.input
-                              field={f[field]}
-                              value={@body_composition && Map.get(@body_composition, field)}
-                              type="text"
-                            />
-                          </:footer>
-                        </.card>
-                      <% end %>
-                    </div>
-                  <% end %>
-                </div>
-                <.button type="submit">
-                  Save
-                </.button>
-              </.form>
-            </div>
+          <%= if @chart_data do %>
+            <.line_graph
+              id="line-chart-1"
+              dataset={@chart_data.dataset}
+              categories={@chart_data.categories}
+              animated={true}
+            />
           <% end %>
+          <div class="flex flex-col gap-4">
+            <%= for measurements <- Enum.chunk_every(@measurements, 2) do %>
+              <div class="flex gap-4">
+                <%= for %{field: field, title: title} <- measurements do %>
+                  <.card title={title} class="w-full">
+                    <div class="font-extrabold h-16 flex justify-center items-center text-3xl">
+                      <div>
+                        <%= if @body_composition && Map.get(@body_composition, field) do %>
+                          <%= Map.get(@body_composition, field) %>
+                        <% else %>
+                          0.0
+                        <% end %>
+                        <span class="text-lg ">
+                          <%= get_data_postfix(field) %>
+                        </span>
+                      </div>
+                    </div>
+                  </.card>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
         </section>
-      </div>
+        <div class="fixed bottom-0 left-0 right-0 flex justify-center">
+          <.clickable_icon
+            name="hero-plus-circle-solid"
+            class="bg-white size-20 mb-4"
+            onclick="add_data"
+          />
+        </div>
+      <% end %>
+      <%= if @live_action == :add_data do %>
+        <div class="flex justify-between max-w-sm">
+          <.clickable_icon name="hero-arrow-left" onclick="go_to_dashboard" />
+        </div>
+      <% end %>
     </div>
     """
   end

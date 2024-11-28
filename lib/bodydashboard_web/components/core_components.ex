@@ -288,6 +288,7 @@ defmodule BodydashboardWeb.CoreComponents do
   attr :prompt, :string, default: nil, doc: "the prompt for select inputs"
   attr :options, :list, doc: "the options to pass to Phoenix.HTML.Form.options_for_select/2"
   attr :multiple, :boolean, default: false, doc: "the multiple flag for select inputs"
+  attr :class, :string, default: ""
 
   attr :rest, :global,
     include: ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
@@ -301,6 +302,7 @@ defmodule BodydashboardWeb.CoreComponents do
     |> assign(:errors, Enum.map(errors, &translate_error(&1)))
     |> assign_new(:name, fn -> if assigns.multiple, do: field.name <> "[]", else: field.name end)
     |> assign_new(:value, fn -> field.value end)
+    |> assign_new(:class, fn -> "" end)
     |> input()
   end
 
@@ -357,7 +359,7 @@ defmodule BodydashboardWeb.CoreComponents do
         id={@id}
         name={@name}
         class={[
-          "mt-2 block w-full rounded-lg text-primary-900 focus:ring-0 sm:text-sm sm:leading-6 min-h-[6rem]",
+          "mt-2 block w-full rounded-lg focus:ring-0 sm:text-sm sm:leading-6 min-h-[6rem]",
           @errors == [] && "border-primary-300 focus:border-primary-400",
           @errors != [] && "border-rose-400 focus:border-rose-400"
         ]}
@@ -379,9 +381,9 @@ defmodule BodydashboardWeb.CoreComponents do
         id={@id}
         value={Phoenix.HTML.Form.normalize_value(@type, @value)}
         class={[
-          "mt-2 block w-full rounded-lg text-primary-900 focus:ring-0 sm:text-sm sm:leading-6",
-          @errors == [] && "border-primary-300 focus:border-primary-400",
-          @errors != [] && "border-rose-400 focus:border-rose-400"
+          "mt-2 block w-full bg-zinc-900 rounded-lg shadow p-4 sm:text-sm sm:leading-6",
+          @errors != [] && "border-rose-400 focus:border-rose-400",
+          @class
         ]}
         {@rest}
       />
@@ -398,7 +400,7 @@ defmodule BodydashboardWeb.CoreComponents do
 
   def label(assigns) do
     ~H"""
-    <label for={@for} class="block text-sm font-semibold leading-6 text-primary-800">
+    <label for={@for} class="block text-sm font-semibold leading-6">
       <%= render_slot(@inner_block) %>
     </label>
     """
@@ -596,54 +598,6 @@ defmodule BodydashboardWeb.CoreComponents do
   def icon(%{name: "hero-" <> _} = assigns) do
     ~H"""
     <span class={[@name, @class]} />
-    """
-  end
-
-  @doc """
-  Renders a clickable [Heroicon](https://heroicons.com).
-
-  Heroicons come in three styles – outline, solid, and mini.
-  By default, the outline style is used, but solid and mini may
-  be applied by using the `-solid` and `-mini` suffix.
-
-  You can customize the size and colors of the icons by setting
-  width, height, and background color classes.
-
-  Icons are extracted from the `deps/heroicons` directory and bundled within
-  your compiled app.css by the plugin in your `assets/tailwind.config.js`.
-
-  attr :name, :string, required: true
-  attr :class, :string, default: nil
-  attr :onclick, :string, default: nil
-  attr :disabled, :boolean, default: false
-  """
-
-  def clickable_icon(%{name: "hero-" <> _} = assigns) do
-    assigns =
-      assigns
-      |> assign_new(:class, fn -> nil end)
-      |> assign_new(:disabled, fn -> false end)
-      |> assign(
-        :phx_click,
-        if(assigns.onclick, do: String.replace(assigns.onclick, "onclick=", ""))
-      )
-
-    ~H"""
-    <span
-      class={
-        [
-          @name,
-          if(@disabled,
-            do: "opacity-20",
-            else: "cursor-pointer hover:scale-110 active:scale-90"
-          ),
-          "transition-transform duration-150",
-          @class
-        ]
-      }
-      phx-click={!@disabled && @phx_click}
-      aria-disabled={@disabled}
-    />
     """
   end
 

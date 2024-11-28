@@ -130,8 +130,7 @@ defmodule BodydashboardWeb.DashboardLive do
   end
 
   def handle_event("add_data", _params, socket) do
-    date_string = Date.to_string(socket.assigns.selected_date)
-    {:noreply, push_patch(socket, to: ~p"/dashboard/add_data/#{date_string}")}
+    {:noreply, push_patch(socket, to: ~p"/dashboard/add_data")}
   end
 
   def handle_event("go_to_dashboard", _params, socket) do
@@ -142,22 +141,33 @@ defmodule BodydashboardWeb.DashboardLive do
   def render(assigns) do
     ~H"""
     <div class="flex h-full flex-col gap-6">
+      <div class="flex justify-between max-w-sm">
+        <button
+          phx-click="decrement_date"
+          class="cursor-pointer hover:scale-110 active:scale-90 transition-transform duration-150"
+        >
+          <.icon name="hero-arrow-left" />
+        </button>
+        <span class="text-xl">
+          <%= if @selected_date == Date.utc_today() do %>
+            Today
+          <% else %>
+            <%= Calendar.strftime(@selected_date, "%b %d") %>
+          <% end %>
+        </span>
+        <button
+          phx-click="increment_date"
+          disabled={Date.add(@selected_date, 1) > Date.utc_today()}
+          class={[
+            "cursor-pointer hover:scale-110 active:scale-90 transition-transform duration-150",
+            Date.add(@selected_date, 1) > Date.utc_today() &&
+              "opacity-20 hover:scale-100 active:scale-100"
+          ]}
+        >
+          <.icon name="hero-arrow-right" />
+        </button>
+      </div>
       <%= if @live_action == :index do %>
-        <div class="flex justify-between max-w-sm">
-          <.clickable_icon name="hero-arrow-left" onclick="decrement_date" />
-          <span class="text-xl">
-            <%= if @selected_date == Date.utc_today() do %>
-              Today
-            <% else %>
-              <%= Calendar.strftime(@selected_date, "%b %d") %>
-            <% end %>
-          </span>
-          <.clickable_icon
-            name="hero-arrow-right"
-            onclick="increment_date"
-            disabled={Date.add(@selected_date, 1) > Date.utc_today()}
-          />
-        </div>
         <section class="w-full flex flex-col gap-6">
           <%= if @chart_data do %>
             <.line_graph
@@ -191,17 +201,61 @@ defmodule BodydashboardWeb.DashboardLive do
           </div>
         </section>
         <div class="fixed bottom-0 left-0 right-0 flex justify-center">
-          <.clickable_icon
-            name="hero-plus-circle-solid"
-            class="bg-white size-20 mb-4"
-            onclick="add_data"
-          />
+          <button
+            phx-click="add_data"
+            class="cursor-pointer hover:scale-110 active:scale-90 transition-transform duration-150"
+          >
+            <.icon name="hero-plus-circle-solid" class="bg-white size-20 mb-4" />
+          </button>
         </div>
       <% end %>
       <%= if @live_action == :add_data do %>
-        <div class="flex justify-between max-w-sm">
-          <.clickable_icon name="hero-arrow-left" onclick="go_to_dashboard" />
-        </div>
+        <section class="w-full flex flex-col gap-6">
+          <.form :let={f} for={@changeset} phx-submit="save" id="">
+            <div class="flex flex-col gap-6">
+              <.input
+                type="text"
+                class=""
+                label="Weight"
+                field={f[:weight_kg]}
+                value={@body_composition && Map.get(@body_composition, :weight_kg)}
+              />
+              <.input
+                type="text"
+                label="Body Fat Percentage"
+                field={f[:body_fat]}
+                value={@body_composition && Map.get(@body_composition, :body_fat)}
+              />
+              <.input
+                type="text"
+                label="Muscle Mass"
+                field={f[:muscle_mass]}
+                value={@body_composition && Map.get(@body_composition, :muscle_mass)}
+              />
+              <.input
+                type="text"
+                label="Bone Density"
+                field={f[:bone_density]}
+                value={@body_composition && Map.get(@body_composition, :bone_density)}
+              />
+            </div>
+            <div class="fixed bottom-0 left-0 right-0 flex justify-center">
+              <button
+                type="submit"
+                class="cursor-pointer hover:scale-110 active:scale-90 transition-transform duration-150"
+              >
+                <.icon name="hero-check-circle-solid" class="bg-white size-20 mb-4" />
+              </button>
+              <button
+                type="button"
+                phx-click="go_to_dashboard"
+                class="cursor-pointer hover:scale-110 active:scale-90 transition-transform duration-150"
+              >
+                <.icon name="hero-x-circle-solid" class="bg-white size-20 mb-4" />
+              </button>
+            </div>
+          </.form>
+        </section>
       <% end %>
     </div>
     """

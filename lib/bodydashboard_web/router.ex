@@ -101,7 +101,7 @@ defmodule BodydashboardWeb.Router do
     live_session :dashboard,
       on_mount: [{BodydashboardWeb.UserAuth, :ensure_authenticated}] do
       live "/", DashboardLive, :index, container: {:div, style: "display: contents"}
-      live "/add_data/:date", DashboardLive, :add_data, container: {:div, style: "display: contents"}
+      live "/add_data", DashboardLive, :add_data, container: {:div, style: "display: contents"}
     end
   end
 end

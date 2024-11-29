@@ -54,14 +54,14 @@ defmodule BodydashboardWeb.Charts do
           data: Enum.map(data, & &1.bone_density)
         }
       ],
-      Enum.map(data, &Calendar.strftime(&1.record_date, "%b-%d"))
+      Enum.map(data, &Calendar.strftime(&1.record_date, "%d-%b"))
     }
   end
 
   def map_bc_data(data) when is_list(data) do
     data
     |> interpolate_missing_bc_data()
-    |> Enum.sort_by(& &1.record_date, :asc)
+    |> Enum.sort_by(&(&1.record_date), Date)
     |> split_fields()
   end
 

@@ -53,6 +53,9 @@ defmodule BodydashboardWeb.DashboardLive do
       |> assign_new(:selected_date, fn -> Date.utc_today() end)
       |> assign(changeset: BodyComposition.changeset(%BodyComposition{}, %{}))
       |> assign(:measurements, @measurements)
+      |> assign_new(:toggled_data, fn ->
+        %{weight: true, bone: true, muscle: true, fat: true}
+      end)
       |> load_body_composition()
       |> update_chart()
 
@@ -79,7 +82,9 @@ defmodule BodydashboardWeb.DashboardLive do
            socket
            |> assign(:body_composition, bc)
            |> put_flash(:info, "Body composition saved successfully")
-           |> update_chart()}
+           |> update_chart()
+           |> assign(:toggled_data, %{weight: true, bone: true, muscle: true, fat: true})
+           |> push_patch(to: ~p"/dashboard")}
 
         {:error, %Ecto.Changeset{} = changeset} ->
           {:noreply,
@@ -94,7 +99,9 @@ defmodule BodydashboardWeb.DashboardLive do
            socket
            |> assign(:body_composition, bc)
            |> put_flash(:info, "Body composition saved successfully")
-           |> update_chart()}
+           |> update_chart()
+           |> assign(:toggled_data, %{weight: true, bone: true, muscle: true, fat: true})
+           |> push_patch(to: ~p"/dashboard")}
 
         {:error, %Ecto.Changeset{} = changeset} ->
           {:noreply,
@@ -134,7 +141,35 @@ defmodule BodydashboardWeb.DashboardLive do
   end
 
   def handle_event("go_to_dashboard", _params, socket) do
-    {:noreply, push_patch(socket, to: ~p"/dashboard")}
+    {:noreply,
+     socket
+     |> assign(:toggled_data, %{weight: true, bone: true, muscle: true, fat: true})
+     |> push_patch(to: ~p"/dashboard")}
+  end
+
+  def handle_event("toggle-" <> field, _params, socket) do
+    field_atom = String.to_existing_atom(field)
+
+    field_names = %{
+      weight: "Weight",
+      bone: "Bone Density",
+      muscle: "Muscle Mass",
+      fat: "Body Fat"
+    }
+
+    display_name = Map.get(field_names, field_atom)
+
+    current_toggles = socket.assigns.toggled_data
+
+    updated_toggles =
+      Map.update!(current_toggles, field_atom, fn current_value ->
+        !current_value
+      end)
+
+    {:noreply,
+     socket
+     |> assign(:toggled_data, updated_toggles)
+     |> push_event("toggle-series", %{name: display_name})}
   end
 
   @impl true
@@ -168,7 +203,7 @@ defmodule BodydashboardWeb.DashboardLive do
         </button>
       </div>
       <%= if @live_action == :index do %>
-        <section class="w-full flex flex-col gap-6">
+        <section class="w-full flex flex-col gap-4">
           <%= if @chart_data do %>
             <.line_graph
               id="line-chart-1"
@@ -178,6 +213,44 @@ defmodule BodydashboardWeb.DashboardLive do
             />
           <% end %>
           <div class="flex flex-col gap-4">
+            <div class="flex text-sm bg-zinc-900 rounded-lg">
+              <button
+                phx-click="toggle-weight"
+                class={[
+                  "p-4 flex-1 rounded-l-lg",
+                  @toggled_data.weight && "bg-zinc-800"
+                ]}
+              >
+                Weight
+              </button>
+              <button
+                phx-click="toggle-bone"
+                class={[
+                  "p-4 flex-1",
+                  @toggled_data.bone && "bg-zinc-800"
+                ]}
+              >
+                Bone
+              </button>
+              <button
+                phx-click="toggle-muscle"
+                class={[
+                  "p-4 flex-1",
+                  @toggled_data.muscle && "bg-zinc-800"
+                ]}
+              >
+                Muscle
+              </button>
+              <button
+                phx-click="toggle-fat"
+                class={[
+                  "p-4 flex-1 rounded-r-lg",
+                  @toggled_data.fat && "bg-zinc-800"
+                ]}
+              >
+                Fat
+              </button>
+            </div>
             <%= for measurements <- Enum.chunk_every(@measurements, 2) do %>
               <div class="flex gap-4">
                 <%= for %{field: field, title: title} <- measurements do %>
@@ -210,7 +283,7 @@ defmodule BodydashboardWeb.DashboardLive do
         </div>
       <% end %>
       <%= if @live_action == :add_data do %>
-        <section class="w-full flex flex-col gap-6">
+        <section class="w-full flex flex-col gap-4">
           <.form :let={f} for={@changeset} phx-submit="save" id="">
             <div class="flex flex-col gap-6">
               <.input

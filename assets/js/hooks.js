@@ -20,11 +20,22 @@ Hooks.Chart = {
 			markers: {
 				size: 6
 			},
+			legend: {
+				show: false
+			},
+			xaxis: {
+				range: 10
+			},
+			yaxis: {
+				decimalsInFloat: 0
+			},
 		}
 
 		const chart = new ApexCharts(this.el, options);
 
 		chart.render();
+
+		console.log("rendered")
 
 		this.handleEvent("update-dataset", data => {
 			chart.updateOptions({
@@ -33,6 +44,10 @@ Hooks.Chart = {
 					categories: data.categories
 				}
 			})
+		})
+
+		this.handleEvent("toggle-series", payload => {
+			chart.toggleSeries(payload.name)
 		})
 	}
 }

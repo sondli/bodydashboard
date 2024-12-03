@@ -192,10 +192,10 @@ defmodule BodydashboardWeb.DashboardLive do
         </span>
         <button
           phx-click="increment_date"
-          disabled={Date.add(@selected_date, 1) > Date.utc_today()}
+          disabled={Date.compare(Date.add(@selected_date, 1), Date.utc_today()) == :gt}
           class={[
             "cursor-pointer hover:scale-110 active:scale-90 transition-transform duration-150",
-            Date.add(@selected_date, 1) > Date.utc_today() &&
+            Date.compare(Date.add(@selected_date, 1), Date.utc_today()) == :gt &&
               "opacity-20 hover:scale-100 active:scale-100"
           ]}
         >

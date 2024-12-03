@@ -1,22 +1,32 @@
 <header class="p-4 sm:p-6 lg:p-8 flex items-center justify-between mx-auto w-full max-w-sm">
-  <div>
-    <.link href={~p"/"} class="font-bold text-xl">
-      BD
-    </.link>
-  </div>
-  <nav>
-    <%= if @current_user do %>
-      <.link href={~p"/users/settings"}>
-        Settings
+  <nav class="flex justify-between items-center w-full">
+    <div>
+      <.link href={~p"/"} class="font-bold text-xl">
+        BD
       </.link>
-    <% else %>
-      <.link href={~p"/users/register"}>
-        Register
+    </div>
+    <div class="flex gap-4">
+      <.link patch={~p"/dashboard/body_composition"}>
+        <.body_icon />
       </.link>
-      <.link href={~p"/users/log_in"}>
-        Log in
+      <.link patch={~p"/dashboard/blood_work"}>
+        <.drop_icon />
       </.link>
-    <% end %>
+    </div>
+    <div>
+      <%= if @current_user do %>
+        <.link href={~p"/users/settings"}>
+          <.profile_icon />
+        </.link>
+      <% else %>
+        <.link href={~p"/users/register"}>
+          Register
+        </.link>
+        <.link href={~p"/users/log_in"}>
+          Log in
+        </.link>
+      <% end %>
+    </div>
   </nav>
 </header>
 <main class="flex-1 p-4 sm:p-6 lg:p-8 mx-auto w-full max-w-sm">

@@ -86,6 +86,8 @@ defmodule BodydashboardWeb do
       # Core UI components and translation
       import BodydashboardWeb.CoreComponents
 
+      import BodydashboardWeb.Icons
+
       # Shortcut for generating JS commands
       alias Phoenix.LiveView.JS
 

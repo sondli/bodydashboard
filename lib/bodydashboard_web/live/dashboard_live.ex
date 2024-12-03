@@ -84,7 +84,7 @@ defmodule BodydashboardWeb.DashboardLive do
            |> put_flash(:info, "Body composition saved successfully")
            |> update_chart()
            |> assign(:toggled_data, %{weight: true, bone: true, muscle: true, fat: true})
-           |> push_patch(to: ~p"/dashboard")}
+           |> push_patch(to: ~p"/dashboard/body_composition")}
 
         {:error, %Ecto.Changeset{} = changeset} ->
           {:noreply,
@@ -101,7 +101,7 @@ defmodule BodydashboardWeb.DashboardLive do
            |> put_flash(:info, "Body composition saved successfully")
            |> update_chart()
            |> assign(:toggled_data, %{weight: true, bone: true, muscle: true, fat: true})
-           |> push_patch(to: ~p"/dashboard")}
+           |> push_patch(to: ~p"/dashboard/body_composition")}
 
         {:error, %Ecto.Changeset{} = changeset} ->
           {:noreply,
@@ -137,14 +137,14 @@ defmodule BodydashboardWeb.DashboardLive do
   end
 
   def handle_event("add_data", _params, socket) do
-    {:noreply, push_patch(socket, to: ~p"/dashboard/add_data")}
+    {:noreply, push_patch(socket, to: ~p"/dashboard/body_composition/add_data")}
   end
 
   def handle_event("go_to_dashboard", _params, socket) do
     {:noreply,
      socket
      |> assign(:toggled_data, %{weight: true, bone: true, muscle: true, fat: true})
-     |> push_patch(to: ~p"/dashboard")}
+     |> push_patch(to: ~p"/dashboard/body_composition")}
   end
 
   def handle_event("toggle-" <> field, _params, socket) do

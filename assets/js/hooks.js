@@ -1,6 +1,6 @@
 let Hooks = {}
 
-Hooks.Chart = {
+Hooks.line_graph = {
 	mounted() {
 		const chartConfig = JSON.parse(this.el.dataset.config)
 		const seriesData = JSON.parse(this.el.dataset.series)
@@ -23,9 +23,6 @@ Hooks.Chart = {
 			legend: {
 				show: false
 			},
-			xaxis: {
-				range: 10
-			},
 			yaxis: {
 				decimalsInFloat: 0
 			},
@@ -34,8 +31,6 @@ Hooks.Chart = {
 		const chart = new ApexCharts(this.el, options);
 
 		chart.render();
-
-		console.log("rendered")
 
 		this.handleEvent("update-dataset", data => {
 			chart.updateOptions({
@@ -52,4 +47,46 @@ Hooks.Chart = {
 	}
 }
 
+Hooks.time_series_graph = {
+	mounted() {
+
+		const chartConfig = JSON.parse(this.el.dataset.config)
+		const seriesData = JSON.parse(this.el.dataset.series)
+
+		console.log(seriesData)
+
+		const options = {
+			chart: Object.assign({
+				background: 'transparent',
+			}, chartConfig),
+			series: seriesData,
+			stroke: {
+				curve: "smooth"
+			},
+			markers: {
+				size: 6
+			},
+			legend: {
+				show: false
+			},
+			yaxis: {
+				decimalsInFloat: 1
+			}
+		}
+
+		const chart = new ApexCharts(this.el, options);
+
+		chart.render();
+
+		this.handleEvent("update-dataset", data => {
+			chart.updateOptions({
+				series: data.series
+			})
+		})
+
+		this.handleEvent("toggle-series", payload => {
+			chart.toggleSeries(payload.name)
+		})
+	}
+}
 export default Hooks

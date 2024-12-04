@@ -13,9 +13,29 @@ defmodule BodydashboardWeb.DashboardLive do
     %{field: :body_fat, title: "Body Fat"}
   ]
 
-  defp load_body_composition(%{assigns: %{current_user: user, selected_date: date}} = socket) do
-    records = Records.get_user_body_composition(user, date)
-    assign(socket, :body_composition, records)
+  defp load_current_bc(
+         %{assigns: %{all_body_composition_data: data, selected_date: date}} = socket
+       ) do
+    current_bc = Enum.find(data, fn x -> Date.compare(x.record_date, date) == :eq end)
+    assign(socket, :current_bc, current_bc)
+  end
+
+  defp insert_updated_bc(%{assigns: %{all_body_composition_data: all_bc}} = socket, new_bc)
+       when is_list(all_bc) and is_struct(new_bc) do
+    updated_list =
+      case Enum.find_index(all_bc, &(&1.id == new_bc.id)) do
+        nil ->
+          [new_bc | all_bc]
+          |> Enum.sort_by(& &1.record_date, Date)
+
+        index ->
+          all_bc
+          |> List.replace_at(index, new_bc)
+          |> Enum.sort_by(& &1.record_date, Date)
+      end
+
+    socket
+    |> assign(:all_body_composition_data, updated_list)
   end
 
   def get_error_messages(changeset) when is_struct(changeset, Ecto.Changeset) do
@@ -25,17 +45,23 @@ defmodule BodydashboardWeb.DashboardLive do
     |> Enum.join(", ")
   end
 
-  defp update_chart(%{assigns: %{current_user: user}} = socket) do
-    {dataset, categories} =
-      user
-      |> Records.get_user_body_composition()
-      |> map_bc_data()
+  defp get_all_body_composition_data(%{assigns: %{current_user: user}} = socket) do
+    data = user |> Records.get_user_body_composition()
 
-    chart_data = %{dataset: dataset, categories: categories}
+    socket
+    |> assign(:all_body_composition_data, data)
+  end
+
+  defp load_chart_data(
+         %{assigns: %{all_body_composition_data: data, toggled_data: toggled_data}} = socket
+       ) do
+    chart_data =
+      data
+      |> get_field_data(toggled_data)
+      |> annotate_field_data(toggled_data)
 
     socket
     |> assign(:chart_data, chart_data)
-    |> push_event("update-dataset", chart_data)
   end
 
   defp get_data_postfix(field) do
@@ -53,11 +79,10 @@ defmodule BodydashboardWeb.DashboardLive do
       |> assign_new(:selected_date, fn -> Date.utc_today() end)
       |> assign(changeset: BodyComposition.changeset(%BodyComposition{}, %{}))
       |> assign(:measurements, @measurements)
-      |> assign_new(:toggled_data, fn ->
-        %{weight: true, bone: true, muscle: true, fat: true}
-      end)
-      |> load_body_composition()
-      |> update_chart()
+      |> assign_new(:toggled_data, fn -> :weight_kg end)
+      |> get_all_body_composition_data()
+      |> load_chart_data()
+      |> load_current_bc()
 
     {:ok, socket}
   end
@@ -69,21 +94,21 @@ defmodule BodydashboardWeb.DashboardLive do
 
   @impl true
   def handle_event("save", %{"body_composition" => body_composition_params}, socket) do
-    params_with_date =
-      Map.put(body_composition_params, "record_date", socket.assigns.selected_date)
-
-    body_composition = socket.assigns.body_composition
     selected_date = socket.assigns.selected_date
 
-    if body_composition && body_composition.record_date == selected_date do
-      case Records.update_body_composition(body_composition.id, params_with_date) do
+    params_with_date =
+      Map.put(body_composition_params, "record_date", selected_date)
+
+    current_bc = socket.assigns.current_bc
+
+    if current_bc && current_bc.record_date == selected_date do
+      case Records.update_body_composition(current_bc.id, params_with_date) do
         {:ok, bc} ->
           {:noreply,
            socket
-           |> assign(:body_composition, bc)
+           |> assign(:current_bc, bc)
+           |> insert_updated_bc(bc)
            |> put_flash(:info, "Body composition saved successfully")
-           |> update_chart()
-           |> assign(:toggled_data, %{weight: true, bone: true, muscle: true, fat: true})
            |> push_patch(to: ~p"/dashboard/body_composition")}
 
         {:error, %Ecto.Changeset{} = changeset} ->
@@ -97,10 +122,9 @@ defmodule BodydashboardWeb.DashboardLive do
         {:ok, bc} ->
           {:noreply,
            socket
-           |> assign(:body_composition, bc)
+           |> assign(:current_bc, bc)
+           |> insert_updated_bc(bc)
            |> put_flash(:info, "Body composition saved successfully")
-           |> update_chart()
-           |> assign(:toggled_data, %{weight: true, bone: true, muscle: true, fat: true})
            |> push_patch(to: ~p"/dashboard/body_composition")}
 
         {:error, %Ecto.Changeset{} = changeset} ->
@@ -116,7 +140,7 @@ defmodule BodydashboardWeb.DashboardLive do
     socket =
       socket
       |> update(:selected_date, &Date.add(&1, -1))
-      |> load_body_composition()
+      |> load_current_bc()
 
     {:noreply, socket}
   end
@@ -132,7 +156,7 @@ defmodule BodydashboardWeb.DashboardLive do
         {:noreply,
          socket
          |> update(:selected_date, &Date.add(&1, 1))
-         |> load_body_composition()}
+         |> load_current_bc()}
     end
   end
 
@@ -148,28 +172,25 @@ defmodule BodydashboardWeb.DashboardLive do
   end
 
   def handle_event("toggle-" <> field, _params, socket) do
-    field_atom = String.to_existing_atom(field)
+    field_atom =
+      case field do
+        "weight" -> :weight_kg
+        "bone" -> :bone_density
+        "muscle" -> :muscle_mass
+        "fat" -> :body_fat
+        _ -> {:error, "Invalid series name"}
+      end
 
-    field_names = %{
-      weight: "Weight",
-      bone: "Bone Density",
-      muscle: "Muscle Mass",
-      fat: "Body Fat"
-    }
-
-    display_name = Map.get(field_names, field_atom)
-
-    current_toggles = socket.assigns.toggled_data
-
-    updated_toggles =
-      Map.update!(current_toggles, field_atom, fn current_value ->
-        !current_value
-      end)
+    chart_data =
+      socket.assigns.all_body_composition_data
+      |> get_field_data(field_atom)
+      |> annotate_field_data(field_atom)
 
     {:noreply,
      socket
-     |> assign(:toggled_data, updated_toggles)
-     |> push_event("toggle-series", %{name: display_name})}
+     |> assign(:chart_data, chart_data)
+     |> assign(:toggled_data, field_atom)
+     |> push_event("update-dataset", %{series: [chart_data]})}
   end
 
   @impl true
@@ -205,12 +226,7 @@ defmodule BodydashboardWeb.DashboardLive do
       <%= if @live_action == :index do %>
         <section class="w-full flex flex-col gap-4">
           <%= if @chart_data do %>
-            <.line_graph
-              id="line-chart-1"
-              dataset={@chart_data.dataset}
-              categories={@chart_data.categories}
-              animated={true}
-            />
+            <.time_series_graph id="line-chart-1" dataset={[@chart_data]} animated={true} />
           <% end %>
           <div class="flex flex-col gap-4">
             <div class="flex text-sm bg-zinc-900 rounded-lg">
@@ -218,7 +234,7 @@ defmodule BodydashboardWeb.DashboardLive do
                 phx-click="toggle-weight"
                 class={[
                   "p-4 flex-1 rounded-l-lg",
-                  @toggled_data.weight && "bg-zinc-800"
+                  @toggled_data == :weight_kg && "bg-zinc-800"
                 ]}
               >
                 Weight
@@ -227,7 +243,7 @@ defmodule BodydashboardWeb.DashboardLive do
                 phx-click="toggle-bone"
                 class={[
                   "p-4 flex-1",
-                  @toggled_data.bone && "bg-zinc-800"
+                  @toggled_data == :bone_density && "bg-zinc-800"
                 ]}
               >
                 Bone
@@ -236,7 +252,7 @@ defmodule BodydashboardWeb.DashboardLive do
                 phx-click="toggle-muscle"
                 class={[
                   "p-4 flex-1",
-                  @toggled_data.muscle && "bg-zinc-800"
+                  @toggled_data == :muscle_mass && "bg-zinc-800"
                 ]}
               >
                 Muscle
@@ -245,7 +261,7 @@ defmodule BodydashboardWeb.DashboardLive do
                 phx-click="toggle-fat"
                 class={[
                   "p-4 flex-1 rounded-r-lg",
-                  @toggled_data.fat && "bg-zinc-800"
+                  @toggled_data == :body_fat && "bg-zinc-800"
                 ]}
               >
                 Fat
@@ -257,8 +273,8 @@ defmodule BodydashboardWeb.DashboardLive do
                   <.card title={title} class="w-full">
                     <div class="font-extrabold h-16 flex justify-center items-center text-3xl">
                       <div>
-                        <%= if @body_composition && Map.get(@body_composition, field) do %>
-                          <%= Map.get(@body_composition, field) %>
+                        <%= if @current_bc && Map.get(@current_bc, field) do %>
+                          <%= Map.get(@current_bc, field) %>
                         <% else %>
                           0.0
                         <% end %>
@@ -291,25 +307,25 @@ defmodule BodydashboardWeb.DashboardLive do
                 class=""
                 label="Weight"
                 field={f[:weight_kg]}
-                value={@body_composition && Map.get(@body_composition, :weight_kg)}
+                value={@current_bc && Map.get(@current_bc, :weight_kg)}
               />
               <.input
                 type="text"
                 label="Body Fat Percentage"
                 field={f[:body_fat]}
-                value={@body_composition && Map.get(@body_composition, :body_fat)}
+                value={@current_bc && Map.get(@current_bc, :body_fat)}
               />
               <.input
                 type="text"
                 label="Muscle Mass"
                 field={f[:muscle_mass]}
-                value={@body_composition && Map.get(@body_composition, :muscle_mass)}
+                value={@current_bc && Map.get(@current_bc, :muscle_mass)}
               />
               <.input
                 type="text"
                 label="Bone Density"
                 field={f[:bone_density]}
-                value={@body_composition && Map.get(@body_composition, :bone_density)}
+                value={@current_bc && Map.get(@current_bc, :bone_density)}
               />
             </div>
             <div class="fixed bottom-0 left-0 right-0 flex justify-center">

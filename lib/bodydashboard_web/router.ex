@@ -100,8 +100,9 @@ defmodule BodydashboardWeb.Router do
 
     live_session :dashboard,
       on_mount: [{BodydashboardWeb.UserAuth, :ensure_authenticated}] do
-      live "/body_composition", DashboardLive, :index, container: {:div, style: "display: contents"}
-      live "/body_composition/add_data", DashboardLive, :add_data, container: {:div, style: "display: contents"}
+      live "/", DashboardLive, :index, container: {:div, style: "display: contents"}
+      live "/body_composition", BodyCompositionLive, :index, container: {:div, style: "display: contents"}
+      live "/body_composition/add_data", BodyCompositionLive, :add_data, container: {:div, style: "display: contents"}
       live "/blood_work", BloodWorkLive, :index, container: {:div, style: "display: contents"}
     end
   end

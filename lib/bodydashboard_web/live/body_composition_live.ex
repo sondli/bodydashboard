@@ -4,7 +4,6 @@ defmodule BodydashboardWeb.BodyCompositionLive do
   import BodydashboardWeb.Charts
 
   alias Bodydashboard.Records
-  alias Bodydashboard.Records.BodyComposition
 
   @measurements [
     %{field: :weight_kg, title: "Weight"},
@@ -36,13 +35,6 @@ defmodule BodydashboardWeb.BodyCompositionLive do
 
     socket
     |> assign(:all_body_composition_data, updated_list)
-  end
-
-  def get_error_messages(changeset) when is_struct(changeset, Ecto.Changeset) do
-    changeset
-    |> Ecto.Changeset.traverse_errors(fn {msg, _opts} -> msg end)
-    |> Enum.map(fn {field, errors} -> "#{field} #{errors}" end)
-    |> Enum.join(", ")
   end
 
   defp get_all_body_composition_data(%{assigns: %{current_user: user}} = socket) do
@@ -77,7 +69,6 @@ defmodule BodydashboardWeb.BodyCompositionLive do
     socket =
       socket
       |> assign_new(:selected_date, fn -> Date.utc_today() end)
-      |> assign(changeset: BodyComposition.changeset(%BodyComposition{}, %{}))
       |> assign(:measurements, @measurements)
       |> assign_new(:toggled_data, fn -> :weight_kg end)
       |> get_all_body_composition_data()
@@ -93,35 +84,29 @@ defmodule BodydashboardWeb.BodyCompositionLive do
   end
 
   @impl true
-  def handle_event("save", %{"body_composition" => body_composition_params}, socket) do
-    selected_date = socket.assigns.selected_date
-    params_with_date = Map.put(body_composition_params, "record_date", selected_date)
-    current_bc = socket.assigns.current_bc
-
-    save_fn =
-      if current_bc && current_bc.record_date == selected_date do
-        fn -> Records.update_body_composition(current_bc.id, params_with_date) end
-      else
-        fn -> Records.create_body_composition(socket.assigns.current_user, params_with_date) end
-      end
-
-    case save_fn.() do
-      {:ok, bc} ->
-        {:noreply,
-         socket
-         |> assign(:current_bc, bc)
-         |> insert_updated_bc(bc)
-         |> load_chart_data()
-         |> push_patch(to: ~p"/dashboard/body_composition")}
-
-      {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply,
-         socket
-         |> assign(:changeset, changeset)
-         |> put_flash(:error, "Failed to save: #{get_error_messages(changeset)}")}
-    end
+  def handle_info({:bc_saved, bc}, socket) do
+    {:noreply,
+     socket
+     |> assign(:current_bc, bc)
+     |> insert_updated_bc(bc)
+     |> load_chart_data()
+     |> push_patch(to: ~p"/dashboard/body_composition")}
   end
 
+  @impl true
+  def handle_info(:cancel_add_data, socket) do
+    {:noreply, push_patch(socket, to: ~p"/dashboard/body_composition")}
+  end
+
+  def handle_event("add_data", _params, socket) do
+    {:noreply, push_patch(socket, to: ~p"/dashboard/body_composition/add_data")}
+  end
+
+  def handle_event("back", _params, socket) do
+    {:noreply, push_navigate(socket, to: ~p"/dashboard")}
+  end
+
+  @impl true
   def handle_event("decrement_date", _params, socket) do
     socket =
       socket
@@ -144,17 +129,6 @@ defmodule BodydashboardWeb.BodyCompositionLive do
          |> update(:selected_date, &Date.add(&1, 1))
          |> load_current_bc()}
     end
-  end
-
-  def handle_event("add_data", _params, socket) do
-    {:noreply, push_patch(socket, to: ~p"/dashboard/body_composition/add_data")}
-  end
-
-  def handle_event("go_to_dashboard", _params, socket) do
-    {:noreply,
-     socket
-     |> assign(:toggled_data, %{weight: true, bone: true, muscle: true, fat: true})
-     |> push_patch(to: ~p"/dashboard/body_composition")}
   end
 
   def handle_event("toggle-" <> field, _params, socket) do
@@ -277,6 +251,12 @@ defmodule BodydashboardWeb.BodyCompositionLive do
         </section>
         <div class="fixed bottom-0 left-0 right-0 flex justify-center">
           <button
+            phx-click="back"
+            class="cursor-pointer hover:scale-110 active:scale-90 transition-transform duration-150"
+          >
+            <.icon name="hero-arrow-left-circle-solid" class="bg-white size-20 mb-4" />
+          </button>
+          <button
             phx-click="add_data"
             class="cursor-pointer hover:scale-110 active:scale-90 transition-transform duration-150"
           >
@@ -285,52 +265,13 @@ defmodule BodydashboardWeb.BodyCompositionLive do
         </div>
       <% end %>
       <%= if @live_action == :add_data do %>
-        <section class="w-full flex flex-col gap-4">
-          <.form :let={f} for={@changeset} phx-submit="save" id="">
-            <div class="flex flex-col gap-6">
-              <.input
-                type="text"
-                class=""
-                label="Weight"
-                field={f[:weight_kg]}
-                value={@current_bc && Map.get(@current_bc, :weight_kg)}
-              />
-              <.input
-                type="text"
-                label="Body Fat Percentage"
-                field={f[:body_fat]}
-                value={@current_bc && Map.get(@current_bc, :body_fat)}
-              />
-              <.input
-                type="text"
-                label="Muscle Mass"
-                field={f[:muscle_mass]}
-                value={@current_bc && Map.get(@current_bc, :muscle_mass)}
-              />
-              <.input
-                type="text"
-                label="Bone Density"
-                field={f[:bone_density]}
-                value={@current_bc && Map.get(@current_bc, :bone_density)}
-              />
-            </div>
-            <div class="fixed bottom-0 left-0 right-0 flex justify-center">
-              <button
-                type="submit"
-                class="cursor-pointer hover:scale-110 active:scale-90 transition-transform duration-150"
-              >
-                <.icon name="hero-check-circle-solid" class="bg-white size-20 mb-4" />
-              </button>
-              <button
-                type="button"
-                phx-click="go_to_dashboard"
-                class="cursor-pointer hover:scale-110 active:scale-90 transition-transform duration-150"
-              >
-                <.icon name="hero-x-circle-solid" class="bg-white size-20 mb-4" />
-              </button>
-            </div>
-          </.form>
-        </section>
+        <.live_component
+          module={BodydashboardWeb.AddBodyCompositionData}
+          id="add_data"
+          current_bc={@current_bc}
+          selected_date={@selected_date}
+          current_user={@current_user}
+        />
       <% end %>
     </div>
     """

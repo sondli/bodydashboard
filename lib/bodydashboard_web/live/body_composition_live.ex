@@ -64,13 +64,28 @@ defmodule BodydashboardWeb.BodyCompositionLive do
     end
   end
 
+  defp get_date_spectrum(middle) when is_struct(middle, Date) do
+    IO.inspect(middle)
+
+    {
+      Date.add(middle, -2),
+      Date.add(middle, -1),
+      middle,
+      Date.add(middle, 1),
+      Date.add(middle, 2)
+    }
+  end
+
   @impl true
   def mount(_params, _session, socket) do
     socket =
       socket
-      |> assign_new(:selected_date, fn -> Date.utc_today() end)
+      |> assign(:selected_date, Date.utc_today())
+      |> then(fn socket ->
+        assign(socket, :date_spectrum, get_date_spectrum(socket.assigns.selected_date))
+      end)
       |> assign(:measurements, @measurements)
-      |> assign_new(:toggled_data, fn -> :weight_kg end)
+      |> assign(:toggled_data, :weight_kg)
       |> get_all_body_composition_data()
       |> load_chart_data()
       |> load_current_bc()
@@ -111,6 +126,9 @@ defmodule BodydashboardWeb.BodyCompositionLive do
     socket =
       socket
       |> update(:selected_date, &Date.add(&1, -1))
+      |> then(fn socket ->
+        assign(socket, :date_spectrum, get_date_spectrum(socket.assigns.selected_date))
+      end)
       |> load_current_bc()
 
     {:noreply, socket}
@@ -127,6 +145,9 @@ defmodule BodydashboardWeb.BodyCompositionLive do
         {:noreply,
          socket
          |> update(:selected_date, &Date.add(&1, 1))
+         |> then(fn socket ->
+           assign(socket, :date_spectrum, get_date_spectrum(socket.assigns.selected_date))
+         end)
          |> load_current_bc()}
     end
   end
@@ -157,25 +178,65 @@ defmodule BodydashboardWeb.BodyCompositionLive do
   def render(assigns) do
     ~H"""
     <div class="flex h-full flex-col gap-6">
-      <div class="flex justify-between max-w-sm">
+      <div class="relative max-w-sm">
         <button
           phx-click="decrement_date"
-          class="cursor-pointer hover:scale-110 active:scale-90 transition-transform duration-150"
+          class="absolute left-0 top-0 cursor-pointer hover:scale-110 active:scale-90 transition-transform duration-150 z-100"
         >
           <.icon name="hero-arrow-left" />
         </button>
-        <span class="text-xl">
-          <%= if @selected_date == Date.utc_today() do %>
-            Today
-          <% else %>
-            <%= Calendar.strftime(@selected_date, "%b %d") %>
-          <% end %>
-        </span>
+        <div class="overflow-hidden">
+          <div class="flex items-center gap-4 text-nowrap pointer-events-none
+          [mask-image:linear-gradient(to_right,transparent,black_30%,black_70%,transparent_100%)]">
+            <%= if @date_spectrum  do %>
+              <span class="text-sm opacity-10">
+                <%= if elem(@date_spectrum, 0) == Date.utc_today() do %>
+                  Today
+                <% else %>
+                  <%= Calendar.strftime(elem(@date_spectrum, 0), "%b %d") %>
+                <% end %>
+              </span>
+              <span class="text-lg opacity-20">
+                <%= if elem(@date_spectrum, 1) == Date.utc_today() do %>
+                  Today
+                <% else %>
+                  <%= Calendar.strftime(elem(@date_spectrum, 1), "%b %d") %>
+                <% end %>
+              </span>
+              <span class="text-xl">
+                <%= if elem(@date_spectrum, 2) == Date.utc_today() do %>
+                  Today
+                <% else %>
+                  <%= Calendar.strftime(elem(@date_spectrum, 2), "%b %d") %>
+                <% end %>
+              </span>
+              <span class="text-lg opacity-20">
+                <%= if Date.compare(elem(@date_spectrum, 3), Date.utc_today()) != :gt do %>
+                  <%= if elem(@date_spectrum, 3) == Date.utc_today() do %>
+                    Today
+                  <% else %>
+                    <%= Calendar.strftime(elem(@date_spectrum, 3), "%b %d") %>
+                  <% end %>
+                <% end %>
+              </span>
+              <span class="text-sm opacity-10">
+                <%= if Date.compare(elem(@date_spectrum, 4), Date.utc_today()) != :gt do %>
+                  <%= if elem(@date_spectrum, 4) == Date.utc_today() do %>
+                    Today
+                  <% else %>
+                    <%= Calendar.strftime(elem(@date_spectrum, 4), "%b %d") %>
+                  <% end %>
+                <% end %>
+              </span>
+            <% end %>
+          </div>
+        </div>
+
         <button
           phx-click="increment_date"
           disabled={Date.compare(Date.add(@selected_date, 1), Date.utc_today()) == :gt}
           class={[
-            "cursor-pointer hover:scale-110 active:scale-90 transition-transform duration-150",
+            "absolute right-0 top-0 cursor-pointer hover:scale-110 active:scale-90 transition-transform duration-150",
             Date.compare(Date.add(@selected_date, 1), Date.utc_today()) == :gt &&
               "opacity-20 hover:scale-100 active:scale-100"
           ]}

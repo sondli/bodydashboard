@@ -95,44 +95,30 @@ defmodule BodydashboardWeb.DashboardLive do
   @impl true
   def handle_event("save", %{"body_composition" => body_composition_params}, socket) do
     selected_date = socket.assigns.selected_date
-
-    params_with_date =
-      Map.put(body_composition_params, "record_date", selected_date)
-
+    params_with_date = Map.put(body_composition_params, "record_date", selected_date)
     current_bc = socket.assigns.current_bc
 
-    if current_bc && current_bc.record_date == selected_date do
-      case Records.update_body_composition(current_bc.id, params_with_date) do
-        {:ok, bc} ->
-          {:noreply,
-           socket
-           |> assign(:current_bc, bc)
-           |> insert_updated_bc(bc)
-           |> put_flash(:info, "Body composition saved successfully")
-           |> push_patch(to: ~p"/dashboard/body_composition")}
-
-        {:error, %Ecto.Changeset{} = changeset} ->
-          {:noreply,
-           socket
-           |> assign(:changeset, changeset)
-           |> put_flash(:error, "Failed to save: #{get_error_messages(changeset)}")}
+    save_fn =
+      if current_bc && current_bc.record_date == selected_date do
+        fn -> Records.update_body_composition(current_bc.id, params_with_date) end
+      else
+        fn -> Records.create_body_composition(socket.assigns.current_user, params_with_date) end
       end
-    else
-      case Records.create_body_composition(socket.assigns.current_user, params_with_date) do
-        {:ok, bc} ->
-          {:noreply,
-           socket
-           |> assign(:current_bc, bc)
-           |> insert_updated_bc(bc)
-           |> put_flash(:info, "Body composition saved successfully")
-           |> push_patch(to: ~p"/dashboard/body_composition")}
 
-        {:error, %Ecto.Changeset{} = changeset} ->
-          {:noreply,
-           socket
-           |> assign(:changeset, changeset)
-           |> put_flash(:error, "Failed to save: #{get_error_messages(changeset)}")}
-      end
+    case save_fn.() do
+      {:ok, bc} ->
+        {:noreply,
+         socket
+         |> assign(:current_bc, bc)
+         |> insert_updated_bc(bc)
+         |> load_chart_data()
+         |> push_patch(to: ~p"/dashboard/body_composition")}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        {:noreply,
+         socket
+         |> assign(:changeset, changeset)
+         |> put_flash(:error, "Failed to save: #{get_error_messages(changeset)}")}
     end
   end
 

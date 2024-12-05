@@ -186,31 +186,31 @@ defmodule BodydashboardWeb.BodyCompositionLive do
           <.icon name="hero-arrow-left" />
         </button>
         <div class="overflow-hidden">
-          <div class="flex items-center gap-4 text-nowrap pointer-events-none
+          <div class="flex justify-center items-center text-nowrap pointer-events-none
           [mask-image:linear-gradient(to_right,transparent,black_30%,black_70%,transparent_100%)]">
             <%= if @date_spectrum  do %>
-              <span class="text-sm opacity-10">
+              <span class="text-sm opacity-10 min-w-24 text-center">
                 <%= if elem(@date_spectrum, 0) == Date.utc_today() do %>
                   Today
                 <% else %>
                   <%= Calendar.strftime(elem(@date_spectrum, 0), "%b %d") %>
                 <% end %>
               </span>
-              <span class="text-lg opacity-20">
+              <span class="text-lg opacity-20 min-w-24 text-center">
                 <%= if elem(@date_spectrum, 1) == Date.utc_today() do %>
                   Today
                 <% else %>
                   <%= Calendar.strftime(elem(@date_spectrum, 1), "%b %d") %>
                 <% end %>
               </span>
-              <span class="text-xl">
+              <span class="text-xl min-w-24 text-center">
                 <%= if elem(@date_spectrum, 2) == Date.utc_today() do %>
                   Today
                 <% else %>
                   <%= Calendar.strftime(elem(@date_spectrum, 2), "%b %d") %>
                 <% end %>
               </span>
-              <span class="text-lg opacity-20">
+              <span class="text-lg opacity-20 min-w-24 text-center">
                 <%= if Date.compare(elem(@date_spectrum, 3), Date.utc_today()) != :gt do %>
                   <%= if elem(@date_spectrum, 3) == Date.utc_today() do %>
                     Today
@@ -219,7 +219,7 @@ defmodule BodydashboardWeb.BodyCompositionLive do
                   <% end %>
                 <% end %>
               </span>
-              <span class="text-sm opacity-10">
+              <span class="text-sm opacity-10 min-w-24 text-center">
                 <%= if Date.compare(elem(@date_spectrum, 4), Date.utc_today()) != :gt do %>
                   <%= if elem(@date_spectrum, 4) == Date.utc_today() do %>
                     Today

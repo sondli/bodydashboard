@@ -20,6 +20,19 @@ defmodule BodydashboardWeb.Charts do
     end
   end
 
+  def get_series_index(series, selected_date)
+      when is_list(series) and is_struct(selected_date, Date) do
+    Enum.find_index(series, fn series_item ->
+      case Date.from_iso8601(series_item.x) do
+        {:ok, date} ->
+          Date.compare(date, selected_date) == :eq
+
+        {:error, _} ->
+          false
+      end
+    end)
+  end
+
   attr :id, :string, required: true
   attr :type, :string, default: "line"
   attr :width, :integer, default: nil

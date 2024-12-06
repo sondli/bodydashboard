@@ -78,6 +78,19 @@ Hooks.time_series_graph = {
 
 		chart.render();
 
+		this.handleEvent("toggle-datapoint", payload => {
+			if (payload.index) {
+				chart.toggleDataPointSelection(0, payload.index);
+				return
+			}
+
+			prevSelected = chart.w.globals.selectedDataPoints[0]
+			if (prevSelected.length > 0) {
+				chart.toggleDataPointSelection(0, prevSelected[0])
+				return
+			}
+		})
+
 		this.handleEvent("update-dataset", data => {
 			chart.updateOptions({
 				series: data.series

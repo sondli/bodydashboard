@@ -65,8 +65,6 @@ defmodule BodydashboardWeb.BodyCompositionLive do
   end
 
   defp get_date_spectrum(middle) when is_struct(middle, Date) do
-    IO.inspect(middle)
-
     {
       Date.add(middle, -2),
       Date.add(middle, -1),
@@ -74,6 +72,15 @@ defmodule BodydashboardWeb.BodyCompositionLive do
       Date.add(middle, 1),
       Date.add(middle, 2)
     }
+  end
+
+  defp toggle_current_datapoint(
+         %{assigns: %{chart_data: chart_data, selected_date: date}} = socket
+       ) do
+    index = get_series_index(chart_data.data, date)
+
+    socket
+    |> push_event("toggle-datapoint", %{index: index})
   end
 
   @impl true
@@ -89,6 +96,7 @@ defmodule BodydashboardWeb.BodyCompositionLive do
       |> get_all_body_composition_data()
       |> load_chart_data()
       |> load_current_bc()
+      |> toggle_current_datapoint()
 
     {:ok, socket}
   end
@@ -127,7 +135,9 @@ defmodule BodydashboardWeb.BodyCompositionLive do
       socket
       |> update(:selected_date, &Date.add(&1, -1))
       |> then(fn socket ->
-        assign(socket, :date_spectrum, get_date_spectrum(socket.assigns.selected_date))
+        socket
+        |> assign(:date_spectrum, get_date_spectrum(socket.assigns.selected_date))
+        |> toggle_current_datapoint()
       end)
       |> load_current_bc()
 
@@ -146,7 +156,9 @@ defmodule BodydashboardWeb.BodyCompositionLive do
          socket
          |> update(:selected_date, &Date.add(&1, 1))
          |> then(fn socket ->
-           assign(socket, :date_spectrum, get_date_spectrum(socket.assigns.selected_date))
+           socket
+           |> assign(:date_spectrum, get_date_spectrum(socket.assigns.selected_date))
+           |> toggle_current_datapoint()
          end)
          |> load_current_bc()}
     end
@@ -189,14 +201,14 @@ defmodule BodydashboardWeb.BodyCompositionLive do
           <div class="flex justify-center items-center text-nowrap pointer-events-none
           [mask-image:linear-gradient(to_right,transparent,black_30%,black_70%,transparent_100%)]">
             <%= if @date_spectrum  do %>
-              <span class="text-sm opacity-10 min-w-24 text-center">
+              <span class="text-sm opacity-10 min-w-20 text-center">
                 <%= if elem(@date_spectrum, 0) == Date.utc_today() do %>
                   Today
                 <% else %>
                   <%= Calendar.strftime(elem(@date_spectrum, 0), "%b %d") %>
                 <% end %>
               </span>
-              <span class="text-lg opacity-20 min-w-24 text-center">
+              <span class="text-lg opacity-20 min-w-20 text-center">
                 <%= if elem(@date_spectrum, 1) == Date.utc_today() do %>
                   Today
                 <% else %>
@@ -210,7 +222,7 @@ defmodule BodydashboardWeb.BodyCompositionLive do
                   <%= Calendar.strftime(elem(@date_spectrum, 2), "%b %d") %>
                 <% end %>
               </span>
-              <span class="text-lg opacity-20 min-w-24 text-center">
+              <span class="text-lg opacity-20 min-w-20 text-center">
                 <%= if Date.compare(elem(@date_spectrum, 3), Date.utc_today()) != :gt do %>
                   <%= if elem(@date_spectrum, 3) == Date.utc_today() do %>
                     Today
@@ -219,7 +231,7 @@ defmodule BodydashboardWeb.BodyCompositionLive do
                   <% end %>
                 <% end %>
               </span>
-              <span class="text-sm opacity-10 min-w-24 text-center">
+              <span class="text-sm opacity-10 min-w-20 text-center">
                 <%= if Date.compare(elem(@date_spectrum, 4), Date.utc_today()) != :gt do %>
                   <%= if elem(@date_spectrum, 4) == Date.utc_today() do %>
                     Today

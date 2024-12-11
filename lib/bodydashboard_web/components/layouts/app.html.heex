@@ -1,4 +1,7 @@
-<header class="p-4 sm:p-6 lg:p-8 flex items-center justify-between mx-auto w-full max-w-sm">
+<header class="
+  p-4 flex items-center justify-between mx-auto w-full
+  lg:p-8 lg:max-w-7xl
+  ">
   <nav class="flex justify-between items-center w-full">
     <div>
       <.link href={~p"/"} class="font-bold text-xl">
@@ -6,30 +9,38 @@
       </.link>
     </div>
     <div class="flex gap-4">
-      <.link patch={~p"/dashboard/body_composition"}>
+      <.link patch={~p"/dashboard/body_composition"} class="flex gap-2">
         <.body_icon />
+        <span class="hidden lg:flex hover:underline">Body Composition</span>
       </.link>
-      <.link patch={~p"/dashboard/blood_work"}>
+      <.link patch={~p"/dashboard/blood_work"} class="flex gap-2">
         <.drop_icon />
+        <span class="hidden lg:flex hover:underline">Blood Work</span>
       </.link>
     </div>
-    <div>
+    <div class="flex gap-4">
       <%= if @current_user do %>
-        <.link href={~p"/users/settings"}>
+        <.link href={~p"/users/settings"} class="flex gap-2">
           <.profile_icon />
+          <span class="hidden lg:flex hover:underline">Settings</span>
         </.link>
       <% else %>
-        <.link href={~p"/users/register"}>
-          Register
+        <.link href={~p"/users/register"} class="flex gap-2">
+          <.icon name="hero-pencil-square" />
+          <span class="hidden lg:flex hover:underline">Register</span>
         </.link>
-        <.link href={~p"/users/log_in"}>
-          Log in
+        <.link href={~p"/users/log_in"} class="flex gap-2">
+          <.icon name="hero-arrow-left-end-on-rectangle" />
+          <span class="hidden lg:flex hover:underline">Log in</span>
         </.link>
       <% end %>
     </div>
   </nav>
 </header>
-<main class="flex-1 p-4 sm:p-6 lg:p-8 mx-auto w-full max-w-sm">
+<main class="
+  flex-1 p-4 mx-auto w-full
+  lg:p-8 lg:max-w-7xl
+  ">
   <.flash_group flash={@flash} />
   <%= @inner_content %>
 </main>

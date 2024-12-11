@@ -190,7 +190,7 @@ defmodule BodydashboardWeb.BodyCompositionLive do
   def render(assigns) do
     ~H"""
     <div class="flex h-full flex-col gap-6">
-      <div class="relative max-w-sm">
+      <div class="relative w-full">
         <button
           phx-click="decrement_date"
           class="absolute left-0 top-0 cursor-pointer hover:scale-110 active:scale-90 transition-transform duration-150 z-100"
@@ -258,9 +258,11 @@ defmodule BodydashboardWeb.BodyCompositionLive do
       </div>
       <%= if @live_action == :index do %>
         <section class="w-full flex flex-col gap-4">
-          <%= if @chart_data do %>
-            <.time_series_graph id="line-chart-1" dataset={[@chart_data]} animated={true} />
-          <% end %>
+          <div class="max-w-lg">
+            <%= if @chart_data do %>
+              <.time_series_graph id="line-chart-1" dataset={[@chart_data]} animated={true} />
+            <% end %>
+          </div>
           <div class="flex flex-col gap-4">
             <div class="flex text-sm bg-zinc-900 rounded-lg">
               <button
